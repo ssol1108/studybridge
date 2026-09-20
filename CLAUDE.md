@@ -1,0 +1,70 @@
+@AGENTS.md
+
+# StudyBridge — 프로젝트 가이드
+
+## 서비스 개요
+
+2022 개정 교육과정 과목과 학생의 전공/관심 분야를 연결해 융합 탐구 주제를 추천하고,
+그 주제의 근거가 되는 논문을 찾아 학생 학년 수준에 맞게 재구성한 뒤,
+논문 이해에 필요한 배경지식을 단계별 퀴즈 게이트(정답률 80%)를 통해 학습시키는 웹 서비스.
+
+핵심 목표는 "주제/논문 추천"에서 끝나지 않고, 사용자가 자기 학년 수준에서 필요한 개념을
+차례로 학습해 최종적으로 논문의 핵심 내용을 스스로 이해하도록 돕는 것.
+
+## 기능별 요구사항 → 구현 위치
+
+1. **융합 탐구 주제 제안**
+   - 입력: 과목(2022 개정 교육과정), 학년, 전공/관심분야, (선택) 단원
+   - 구현: [src/components/TopicForm.tsx](src/components/TopicForm.tsx),
+     [src/app/api/suggest-topic/route.ts](src/app/api/suggest-topic/route.ts)
+   - 과목/단원 데이터: [src/data/curriculum.ts](src/data/curriculum.ts)
+     — 현재 데모용 6개 과목만 있음. 실제 서비스화 시 교육부 고시 2022 개정 교육과정
+     전체 과목/단원으로 교체 필요 (TODO 주석 참고).
+
+2. **근거 논문 탐색 + 학생 눈높이 재구성**
+   - 논문 메타데이터/초록은 Semantic Scholar API로 검색 (키 불필요, rate limit 있음)
+   - 재구성(연구배경/목적/핵심개념/방법/결과, 학년별 눈높이)은 Claude에게 위임
+   - 구현: [src/app/api/find-papers/route.ts](src/app/api/find-papers/route.ts),
+     [src/components/PaperList.tsx](src/components/PaperList.tsx)
+   - 국내 논문(RISS/DBpia)은 공식 API가 제한적이라 아직 미연동. 필요 시 사용자가
+     직접 논문 텍스트를 붙여넣는 입력 경로를 추가하는 방향을 고려.
+
+3. **배경지식 핵심 개념 선별 + 학년별 설명**
+   - 선택한 논문의 핵심 개념을 학년/수준에 맞게 쪼개고 쉬운 설명 생성
+   - 구현: [src/app/api/generate-steps/route.ts](src/app/api/generate-steps/route.ts)
+
+4. **단계별 학습 + 퀴즈 게이트 (정답률 80%)**
+   - 한 단계 = 개념 설명 1개 + 확인 퀴즈. 80% 미만이면 재학습, 이상이면 다음 단계 진행.
+   - 게이트 기준(`PASS_RATE = 0.8`)은 [src/app/api/quiz/check/route.ts](src/app/api/quiz/check/route.ts)
+     에 정의되어 있음. 기준을 바꾸려면 이 상수만 수정.
+   - UI/진행 로직: [src/components/LearningStep.tsx](src/components/LearningStep.tsx)
+   - 전체 흐름(주제→논문→학습 단계) 오케스트레이션: [src/app/page.tsx](src/app/page.tsx)
+     (현재는 세션 내 React state로만 진행 상태를 관리 — 새로고침하면 초기화됨)
+
+## 아키텍처 메모
+
+- Next.js App Router 하나로 프론트엔드 + API Routes(백엔드)를 함께 운영.
+- LLM 호출은 전부 [src/lib/claude.ts](src/lib/claude.ts)의 `askClaude()`를 통과.
+  `ANTHROPIC_API_KEY`가 없으면 각 API route가 자체 mock 데이터로 응답하므로
+  키 없이도 프론트엔드 흐름 전체를 확인할 수 있음.
+- 각 API route는 Claude 응답을 JSON 배열로 강제하는 프롬프트를 쓰고, 파싱 실패 시
+  mock 데이터로 fallback — 프롬프트를 바꿀 때 이 파싱 계약(JSON 배열)을 유지할 것.
+
+## 아직 없는 것 (다음 작업 후보)
+
+- 사용자 인증 및 학습 진행 상태 영속화 (현재는 DB 없음, 새로고침하면 초기화)
+- 2022 개정 교육과정 전체 과목/단원 데이터
+- 국내 논문 검색 연동
+- 퀴즈 문항 수/난이도를 학년별로 조정하는 로직
+
+## 개발 명령어
+
+```bash
+npm run dev      # 개발 서버
+npm run build    # 프로덕션 빌드
+npm run lint     # ESLint
+```
+
+## 환경 변수
+
+`.env.local.example` 참고. `ANTHROPIC_API_KEY`만 있으면 됨(Semantic Scholar는 키 불필요).
