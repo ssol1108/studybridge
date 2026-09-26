@@ -28,12 +28,22 @@ export interface PaperSummary {
   results: string;
 }
 
-export interface QuizQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  answerIndex: number;
-}
+export type QuizQuestion =
+  | {
+      id: string;
+      type: "multiple-choice";
+      question: string;
+      options: string[];
+      answerIndex: number;
+    }
+  | {
+      id: string;
+      type: "short-answer";
+      question: string;
+      acceptableAnswers: string[];
+    };
+
+export type QuizAnswer = number | string;
 
 export interface ConceptStep {
   id: string;

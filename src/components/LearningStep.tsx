@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { ConceptStep, QuizAttemptResult } from "@/types";
+import { ConceptStep, QuizAnswer, QuizAttemptResult } from "@/types";
+
+function emptyAnswers(step: ConceptStep): QuizAnswer[] {
+  return step.quiz.map((q) => (q.type === "short-answer" ? "" : -1));
+}
+
+function isAnswered(answer: QuizAnswer): boolean {
+  return typeof answer === "string" ? answer.trim().length > 0 : answer >= 0;
+}
 
 // 기능 4: 한 단계 = 개념 설명 + 퀴즈. 정답률 80% 미만이면 재학습, 이상이면 다음 단계로.
 export default function LearningStep({
@@ -15,14 +23,12 @@ export default function LearningStep({
   totalSteps: number;
   onPassed: () => void;
 }) {
-  const [answers, setAnswers] = useState<number[]>(
-    Array(step.quiz.length).fill(-1)
-  );
+  const [answers, setAnswers] = useState<QuizAnswer[]>(emptyAnswers(step));
   const [result, setResult] = useState<QuizAttemptResult | null>(null);
   const [checking, setChecking] = useState(false);
   const [attempt, setAttempt] = useState(1);
 
-  const allAnswered = answers.every((a) => a >= 0);
+  const allAnswered = answers.every(isAnswered);
 
   async function checkQuiz() {
     setChecking(true);
@@ -43,7 +49,7 @@ export default function LearningStep({
   }
 
   function retry() {
-    setAnswers(Array(step.quiz.length).fill(-1));
+    setAnswers(emptyAnswers(step));
     setResult(null);
   }
 
@@ -79,37 +85,54 @@ export default function LearningStep({
             <div className="mb-3 text-sm font-medium text-slate-900">
               Q{qi + 1}. {q.question}
             </div>
-            <div className="flex flex-col gap-2">
-              {q.options.map((opt, oi) => {
-                const selected = answers[qi] === oi;
-                return (
-                  <label
-                    key={oi}
-                    className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-sm transition-colors ${
-                      selected
-                        ? "border-accent bg-accent/5 text-slate-900"
-                        : "border-slate-200 text-slate-600 hover:border-slate-300"
-                    } ${result ? "cursor-default" : ""}`}
-                  >
-                    <input
-                      type="radio"
-                      name={q.id}
-                      className="accent-accent"
-                      checked={selected}
-                      onChange={() =>
-                        setAnswers((prev) => {
-                          const next = [...prev];
-                          next[qi] = oi;
-                          return next;
-                        })
-                      }
-                      disabled={!!result}
-                    />
-                    {opt}
-                  </label>
-                );
-              })}
-            </div>
+            {q.type === "multiple-choice" ? (
+              <div className="flex flex-col gap-2">
+                {q.options.map((opt, oi) => {
+                  const selected = answers[qi] === oi;
+                  return (
+                    <label
+                      key={oi}
+                      className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                        selected
+                          ? "border-accent bg-accent/5 text-slate-900"
+                          : "border-slate-200 text-slate-600 hover:border-slate-300"
+                      } ${result ? "cursor-default" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name={q.id}
+                        className="accent-accent"
+                        checked={selected}
+                        onChange={() =>
+                          setAnswers((prev) => {
+                            const next = [...prev];
+                            next[qi] = oi;
+                            return next;
+                          })
+                        }
+                        disabled={!!result}
+                      />
+                      {opt}
+                    </label>
+                  );
+                })}
+              </div>
+            ) : (
+              <input
+                type="text"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-slate-50"
+                placeholder="정답을 입력하세요"
+                value={answers[qi]}
+                onChange={(e) =>
+                  setAnswers((prev) => {
+                    const next = [...prev];
+                    next[qi] = e.target.value;
+                    return next;
+                  })
+                }
+                disabled={!!result}
+              />
+            )}
           </div>
         ))}
       </div>
