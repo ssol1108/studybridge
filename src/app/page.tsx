@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TopicForm, { TopicFormValue } from "@/components/TopicForm";
 import TopicResult from "@/components/TopicResult";
 import PaperList, { PaperStatus } from "@/components/PaperList";
@@ -8,9 +8,14 @@ import LearningStep from "@/components/LearningStep";
 import StepIndicator from "@/components/StepIndicator";
 import { SUBJECTS } from "@/data/curriculum";
 import { buildLevelNote } from "@/lib/gradeLevel";
+import { clearSession, loadSession, saveSession } from "@/lib/sessionStorage";
 import { ConceptStep, PaperSummary, TopicSuggestion } from "@/types";
 
 type Stage = "topic-form" | "topic-result" | "papers" | "learning" | "done";
+
+function isStage(value: string): value is Stage {
+  return value in STAGE_STEP;
+}
 
 const STAGE_STEP: Record<Stage, number> = {
   "topic-form": 1,
@@ -46,6 +51,59 @@ export default function Home() {
 
   const [summary, setSummary] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
+
+  const [hydrated, setHydrated] = useState(false);
+
+  // 새로고침해도 진행 상태가 안 날아가도록: 마운트 시 한 번 localStorage에서 복원.
+  // hydrated가 true가 되기 전까지는 저장 effect가 돌지 않게 해서, 복원되기도 전에
+  // 기본값(빈 상태)으로 덮어써버리는 걸 막는다.
+  useEffect(() => {
+    const persisted = loadSession();
+    if (persisted) {
+      if (isStage(persisted.stage)) setStage(persisted.stage);
+      setGrade(persisted.grade ?? "");
+      setLevelNote(persisted.levelNote);
+      setSuggestions(persisted.suggestions ?? []);
+      setSelectedTopic(persisted.selectedTopic ?? null);
+      setPapers(persisted.papers ?? []);
+      setActivePaperId(persisted.activePaperId ?? null);
+      setStepsByPaper(persisted.stepsByPaper ?? {});
+      setStepIndexByPaper(persisted.stepIndexByPaper ?? {});
+      setCompletedPaperIds(new Set(persisted.completedPaperIds ?? []));
+      setSummary(persisted.summary ?? null);
+    }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    saveSession({
+      stage,
+      grade,
+      levelNote,
+      suggestions,
+      selectedTopic,
+      papers,
+      activePaperId,
+      stepsByPaper,
+      stepIndexByPaper,
+      completedPaperIds: Array.from(completedPaperIds),
+      summary,
+    });
+  }, [
+    hydrated,
+    stage,
+    grade,
+    levelNote,
+    suggestions,
+    selectedTopic,
+    papers,
+    activePaperId,
+    stepsByPaper,
+    stepIndexByPaper,
+    completedPaperIds,
+    summary,
+  ]);
 
   function statusOf(paperId: string): PaperStatus {
     if (completedPaperIds.has(paperId)) return "done";
@@ -216,6 +274,7 @@ export default function Home() {
     setActivePaperId(null);
     setSummary(null);
     setLevelNote(undefined);
+    clearSession();
   }
 
   const activeSteps = activePaperId ? stepsByPaper[activePaperId] : undefined;
@@ -230,6 +289,14 @@ export default function Home() {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             StudyBridge
           </h1>
+          {stage !== "topic-form" && (
+            <button
+              className="text-xs text-slate-400 underline hover:text-slate-600"
+              onClick={resetAll}
+            >
+              처음부터 다시 시작
+            </button>
+          )}
         </header>
 
         <StepIndicator current={STAGE_STEP[stage]} />
