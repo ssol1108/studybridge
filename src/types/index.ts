@@ -1,6 +1,4 @@
-export type Grade =
-  | "중1" | "중2" | "중3"
-  | "고1" | "고2" | "고3";
+export type Grade = "고1" | "고2" | "고3";
 
 export interface Subject {
   id: string;

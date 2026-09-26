@@ -14,18 +14,28 @@
 ## 기능별 요구사항 → 구현 위치
 
 1. **융합 탐구 주제 제안**
-   - 입력: 과목(2022 개정 교육과정), 학년, 전공/관심분야, (선택) 단원
+   - 입력: 과목(2022 개정 교육과정), 학년(고1~고3만 지원), 전공/관심분야, (선택) 단원
    - 구현: [src/components/TopicForm.tsx](src/components/TopicForm.tsx),
      [src/app/api/suggest-topic/route.ts](src/app/api/suggest-topic/route.ts)
-   - 과목/단원 데이터: [src/data/curriculum.ts](src/data/curriculum.ts)
+   - 학년 범위: [src/types/index.ts](src/types/index.ts)의 `Grade` 타입 = `"고1" | "고2" | "고3"`.
+     범위를 넓히려면 이 타입과 [TopicForm.tsx](src/components/TopicForm.tsx)의 `GRADES` 배열을 같이 수정.
+   - 과목/단원 데이터: [src/data/curriculum.json](src/data/curriculum.json)
+     ([src/data/curriculum.ts](src/data/curriculum.ts)가 이 JSON을 그대로 불러와 export함 —
+     과목/단원을 추가·수정할 때는 .ts가 아니라 .json 파일을 편집할 것)
      — 현재 데모용 6개 과목만 있음. 실제 서비스화 시 교육부 고시 2022 개정 교육과정
-     전체 과목/단원으로 교체 필요 (TODO 주석 참고).
+     전체 과목/단원으로 교체 필요. 공식 JSON/API가 없으므로 국가교육과정정보센터(NCIC,
+     https://ncic.re.kr)나 교육부 고시문(PDF)을 참고해 직접 옮겨 적어야 함 — curriculum.ts
+     상단 주석에 출처 정리해둠.
 
 2. **근거 논문 탐색 + 학생 눈높이 재구성**
-   - 논문 메타데이터/초록은 Semantic Scholar API로 검색 (키 불필요, rate limit 있음)
-   - 재구성(연구배경/목적/핵심개념/방법/결과, 학년별 눈높이)은 Claude에게 위임
+   - 논문 메타데이터/초록은 Semantic Scholar API로 검색 (키 불필요, rate limit 있음, limit=5)
+   - Claude에게 후보 중 주제와 가장 관련 있는 논문을 최대 3개까지 골라 재구성하도록 요청
+     (연구배경/목적/핵심개념/방법/결과, 학년별 눈높이)
    - 구현: [src/app/api/find-papers/route.ts](src/app/api/find-papers/route.ts),
      [src/components/PaperList.tsx](src/components/PaperList.tsx)
+   - UI는 논문 카드를 여러 개 나열하고 학생이 그중 하나를 클릭해 배경지식 학습을 시작하는
+     구조 (`PaperList`가 `papers.map`으로 렌더링, [src/app/page.tsx](src/app/page.tsx)의
+     `handlePaperSelect`가 선택된 논문 하나로 다음 단계 진행)
    - 국내 논문(RISS/DBpia)은 공식 API가 제한적이라 아직 미연동. 필요 시 사용자가
      직접 논문 텍스트를 붙여넣는 입력 경로를 추가하는 방향을 고려.
 

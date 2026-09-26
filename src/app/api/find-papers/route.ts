@@ -19,7 +19,9 @@ export async function POST(req: NextRequest) {
   }
 
   const system = `너는 학생이 논문을 쉽게 이해하도록 돕는 학습 코치야.
-주어진 논문 정보(제목/초록)를 바탕으로 연구배경, 목적, 핵심개념, 방법, 결과를 ${grade} 학생이 이해할 수 있는 표현으로 재구성해.
+검색된 논문 후보 중 탐구 주제와 가장 관련 있는 논문을 최대 3개까지 골라,
+각각의 연구배경, 목적, 핵심개념, 방법, 결과를 ${grade} 학생이 이해할 수 있는 표현으로 재구성해.
+학생이 하나씩 비교해서 고를 수 있도록 서로 다른 논문 2~3개를 골라야 해 (후보가 1개뿐이면 1개만).
 반드시 JSON 배열로만 답해. 각 항목은
 {"title":"","authors":"","year":0,"url":"","background":"","purpose":"","coreConcepts":["",""],"method":"","results":""} 형식이어야 해.`;
 
@@ -62,17 +64,16 @@ function extractJson(text: string) {
 }
 
 function mockPapers(topic: string): PaperSummary[] {
-  return [
-    {
-      id: "mock-paper-1",
-      title: `${topic} 관련 예시 논문 A`,
-      authors: "예시 저자 외",
-      year: 2022,
-      background: "이 분야에서 기존 연구들이 놓치고 있던 문제 상황을 설명합니다. (예시 데이터)",
-      purpose: "해당 문제를 해결하기 위해 이 연구가 무엇을 밝히려 했는지 설명합니다.",
-      coreConcepts: ["핵심 개념 1", "핵심 개념 2"],
-      method: "연구자들이 어떤 방법으로 실험/분석했는지 학생 눈높이로 설명합니다.",
-      results: "연구를 통해 밝혀진 결과와 그 의미를 설명합니다.",
-    },
-  ];
+  const labels = ["A", "B", "C"];
+  return labels.map((label, i) => ({
+    id: `mock-paper-${i + 1}`,
+    title: `${topic} 관련 예시 논문 ${label}`,
+    authors: "예시 저자 외",
+    year: 2021 + i,
+    background: "이 분야에서 기존 연구들이 놓치고 있던 문제 상황을 설명합니다. (예시 데이터)",
+    purpose: "해당 문제를 해결하기 위해 이 연구가 무엇을 밝히려 했는지 설명합니다.",
+    coreConcepts: [`핵심 개념 ${i * 2 + 1}`, `핵심 개념 ${i * 2 + 2}`],
+    method: "연구자들이 어떤 방법으로 실험/분석했는지 학생 눈높이로 설명합니다.",
+    results: "연구를 통해 밝혀진 결과와 그 의미를 설명합니다.",
+  }));
 }

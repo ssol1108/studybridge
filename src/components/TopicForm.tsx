@@ -4,7 +4,7 @@ import { useState } from "react";
 import { SUBJECTS } from "@/data/curriculum";
 import { Grade } from "@/types";
 
-const GRADES: Grade[] = ["중1", "중2", "중3", "고1", "고2", "고3"];
+const GRADES: Grade[] = ["고1", "고2", "고3"];
 
 export interface TopicFormValue {
   subjectId: string;
