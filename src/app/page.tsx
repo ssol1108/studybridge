@@ -75,9 +75,14 @@ export default function Home() {
   // 새로고침해도 진행 상태가 안 날아가도록: 마운트 시 한 번 localStorage에서 복원.
   // hydrated가 true가 되기 전까지는 저장 effect가 돌지 않게 해서, 복원되기도 전에
   // 기본값(빈 상태)으로 덮어써버리는 걸 막는다.
+  // localStorage는 서버에 없는 값이라 lazy useState 초기값으로는 쓸 수 없음 (SSR에서
+  // 렌더된 결과와 클라이언트 첫 렌더가 달라져 hydration mismatch가 남) - 그래서 마운트
+  // 이펙트에서 읽어와 setState하는 이 패턴이 의도적인 선택이고, 일반적인 "effect 안에서
+  // setState 하지 마라" 권고의 정당한 예외에 해당함.
   useEffect(() => {
     const persisted = loadSession();
     if (persisted) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 위 설명 참고
       if (isStage(persisted.stage)) setStage(persisted.stage);
       setGrade(persisted.grade ?? "");
       setLevelNote(persisted.levelNote);
@@ -260,10 +265,9 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "정리글 생성에 실패했습니다.");
       setSummary(data.summary ?? null);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "정리글 생성에 실패했습니다. 잠시 후 다시 시도해주세요."
-      );
+    } catch {
+      // 완료 축하 화면 위에 빨간 에러 배너까지 띄우는 건 과함 - 정리글 자리에 부드러운
+      // 안내 문구만 넣어서, 학습 자체는 잘 끝났다는 걸 계속 강조한다.
       setSummary("정리글을 불러오지 못했어요. 그래도 학습은 잘 완료하셨어요!");
     } finally {
       setSummaryLoading(false);
