@@ -35,6 +35,17 @@
      선택 가능하도록 이미 처리되어 있어 UI상 문제는 없음.
    - 공식 JSON/API가 없으므로 국가교육과정정보센터(NCIC, https://ncic.re.kr)나 교육부
      고시문(PDF)이 유일한 출처. curriculum.ts 상단 주석에도 정리해둠.
+   - **학년-과목 수준 매칭**: 각 Subject는 `typicalGrade`(공통 과목="고1", 일반/진로/융합선택="고2~3",
+     예체능="고1~3")를 갖고 있음 (과목명이 아라비아 숫자 1/2로 끝나면 공통 과목이라는 규칙으로
+     분류함 — 학교마다 실제 편성 학년은 다를 수 있어 "고2~3"로 뭉뚱그린 근사치임에 주의).
+     [src/lib/gradeLevel.ts](src/lib/gradeLevel.ts)의 `isGradeTypical`/`buildLevelNote`가 학생이
+     고른 학년이 그 과목의 typicalGrade 범위 밖이면 안내 문장(`levelNote`)을 만들고,
+     TopicForm은 이걸 노란 경고 문구로 보여줌(제출은 막지 않음 — 진로 목적의 선행 탐색도
+     유효한 사용 시나리오라서). `levelNote`는 suggest-topic·generate-steps 프롬프트에도
+     그대로 실려 Claude가 "이 학생이 이 과목을 아직 정식으로 안 배웠을 수 있다"를 알고
+     설명 난이도를 조절하게 함. 예전에는 grade가 그냥 "학생 학년: 고1" 텍스트 한 줄로만
+     프롬프트에 들어가서 과목/학년 간 실제 연결이 전혀 없었음 — 이게 그 격차를 메우는
+     장치지, 실제 선수학습 추적(어떤 단원을 이미 배웠는지)까지 하는 건 아님.
 
 2. **근거 논문 탐색 + 학생 눈높이 재구성**
    - 논문 메타데이터/초록은 Semantic Scholar API로 검색 (키 불필요, rate limit 있음, limit=5)
