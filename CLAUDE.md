@@ -68,8 +68,14 @@
    - **논문 3개는 "하나 골라서 학습"이 아니라 "3개 다 학습"하는 구조**임. [src/app/page.tsx](src/app/page.tsx)가
      `stepsByPaper`/`stepIndexByPaper`/`completedPaperIds`로 논문별 학습 상태를 따로 추적하고,
      학습 중 "← 논문 목록으로" 버튼으로 언제든 다른 논문으로 전환 가능. `PaperList`는
-     `statusByPaperId`(new/in-progress/done)를 받아 배지와 버튼 문구를 바꿈. 3개 다
-     done이면 목록 위에 완료 배너 표시.
+     `statusByPaperId`(new/in-progress/done)를 받아 배지와 버튼 문구를 바꿈. 3개 다 done이면
+     별도 `"done"` stage(4단계 완료 페이지)로 이동함 (papers 화면에 배너로 붙는 방식이 아님).
+   - `handlePaperSelect`에서 **status가 done인 논문을 다시 열면 `stepIndexByPaper`를 0으로
+     리셋**한 뒤 learning으로 이동함 — 안 그러면 "다시 학습하기"가 사실 "이어서 학습하기"랑
+     똑같이 동작해서(캐시된 stepsByPaper만 확인) 완료된 논문의 마지막 단계로 바로 떨어지는
+     버그가 있었음. 새 status를 추가하게 되면 이 분기 조건도 같이 봐야 함.
+   - `TopicResult`/`PaperList`는 `loading` prop을 받아 버튼을 비활성화함 — 이게 없으면
+     API 응답 오는 동안 같은 항목을 더블클릭해서 요청이 두 번 나가는 문제가 있었음.
    - 국내 논문(RISS/DBpia)은 공식 API가 제한적이라 아직 미연동. 필요 시 사용자가
      직접 논문 텍스트를 붙여넣는 입력 경로를 추가하는 방향을 고려.
 
@@ -95,6 +101,17 @@
      localStorage에 저장되어 새로고침해도 유지됨 (계정/DB가 없어서 "이 브라우저의 가장
      최근 세션 하나"만 기억하는 수준 — 기기 간 동기화나 여러 세션 이력 관리는 안 됨).
      헤더의 "처음부터 다시 시작" 링크나 `resetAll()`이 이 저장된 세션도 같이 지움.
+     복원된 세션이 topic-form이 아니면 "이전에 하던 학습을 이어서 보고 있어요" 배너를 보여줌
+     (`showRestoredBanner`, 닫기 가능).
+   - **단계 간 뒤로가기**: topic-result → topic-form("← 다시 조건 선택하기"), papers →
+     topic-result("← 다른 주제 보기"), learning → papers("← 논문 목록으로")까지 3군데 다
+     있음. topic-form으로 돌아갈 때는 `lastFormValue`(마지막 제출값, 세션에도 저장됨)를
+     `TopicForm`의 `initialValue`로 넘겨서 학년/과목/전공을 다시 입력할 필요 없게 함 — 새
+     단계 추가 시 이 뒤로가기 체인이 끊기지 않게 주의.
+   - 로딩 표시: `loading`이 true일 때 `LOADING_LABEL[stage]`에 정의된 문구 + Spinner를
+     `<h2>` 바로 아래에 보여줌 (카드 맨 밑 작은 회색 텍스트 대신). `TopicResult`/`PaperList`는
+     `loading` prop으로 버튼을 비활성화함. 새 단계에서 자체 로딩 상태를 추가하면
+     `LOADING_LABEL`에도 항목을 추가할 것 (안 그러면 로딩 중인데 아무 표시도 안 뜸).
 
 5. **완료 페이지 + 학습 정리글 (4단계)**
    - 논문 3개를 전부 완료(`completedPaperIds`가 papers 전체를 커버)하면 "papers"가 아니라
