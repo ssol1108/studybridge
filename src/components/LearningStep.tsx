@@ -27,11 +27,13 @@ export default function LearningStep({
   const [result, setResult] = useState<QuizAttemptResult | null>(null);
   const [checking, setChecking] = useState(false);
   const [attempt, setAttempt] = useState(1);
+  const [error, setError] = useState<string | null>(null);
 
   const allAnswered = answers.every(isAnswered);
 
   async function checkQuiz() {
     setChecking(true);
+    setError(null);
     try {
       const res = await fetch("/api/quiz/check", {
         method: "POST",
@@ -39,10 +41,15 @@ export default function LearningStep({
         body: JSON.stringify({ stepId: step.id, quiz: step.quiz, answers }),
       });
       const data = await res.json();
+      if (!res.ok || !data.result) {
+        throw new Error(data.error || "채점에 실패했습니다.");
+      }
       setResult(data.result);
       if (!data.result.passed) {
         setAttempt((a) => a + 1);
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "채점에 실패했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setChecking(false);
     }
@@ -51,6 +58,7 @@ export default function LearningStep({
   function retry() {
     setAnswers(emptyAnswers(step));
     setResult(null);
+    setError(null);
   }
 
   return (
@@ -136,6 +144,10 @@ export default function LearningStep({
           </div>
         ))}
       </div>
+
+      {error && (
+        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>
+      )}
 
       {!result && (
         <button

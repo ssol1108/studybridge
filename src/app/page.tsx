@@ -73,10 +73,16 @@ export default function Home() {
         }),
       });
       const data = await res.json();
-      setSuggestions(data.suggestions ?? []);
+      if (!res.ok) throw new Error(data.error || "주제 추천에 실패했습니다.");
+      if (!data.suggestions?.length) {
+        throw new Error("추천할 만한 주제를 찾지 못했어요. 전공/관심분야를 다르게 입력해보세요.");
+      }
+      setSuggestions(data.suggestions);
       setStage("topic-result");
-    } catch {
-      setError("주제 추천에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "주제 추천에 실패했습니다. 잠시 후 다시 시도해주세요."
+      );
     } finally {
       setLoading(false);
     }
@@ -96,14 +102,20 @@ export default function Home() {
         }),
       });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "논문 검색에 실패했습니다.");
+      if (!data.papers?.length) {
+        throw new Error("관련 논문을 찾지 못했어요. 다른 주제를 선택해보세요.");
+      }
       setSelectedTopic(topic);
-      setPapers(data.papers ?? []);
+      setPapers(data.papers);
       setCompletedPaperIds(new Set());
       setStepsByPaper({});
       setStepIndexByPaper({});
       setStage("papers");
-    } catch {
-      setError("논문 검색에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "논문 검색에 실패했습니다. 잠시 후 다시 시도해주세요."
+      );
     } finally {
       setLoading(false);
     }
@@ -126,11 +138,19 @@ export default function Home() {
         body: JSON.stringify({ paper, grade, levelNote }),
       });
       const data = await res.json();
-      setStepsByPaper((prev) => ({ ...prev, [paper.id]: data.steps ?? [] }));
+      if (!res.ok) throw new Error(data.error || "배경지식 단계 생성에 실패했습니다.");
+      if (!data.steps?.length) {
+        throw new Error("배경지식 단계를 만들지 못했어요. 다른 논문을 선택해보세요.");
+      }
+      setStepsByPaper((prev) => ({ ...prev, [paper.id]: data.steps }));
       setStepIndexByPaper((prev) => ({ ...prev, [paper.id]: prev[paper.id] ?? 0 }));
       setStage("learning");
-    } catch {
-      setError("배경지식 단계 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "배경지식 단계 생성에 실패했습니다. 잠시 후 다시 시도해주세요."
+      );
     } finally {
       setLoading(false);
     }
@@ -151,9 +171,13 @@ export default function Home() {
         }),
       });
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "정리글 생성에 실패했습니다.");
       setSummary(data.summary ?? null);
-    } catch {
-      setError("정리글 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "정리글 생성에 실패했습니다. 잠시 후 다시 시도해주세요."
+      );
+      setSummary("정리글을 불러오지 못했어요. 그래도 학습은 잘 완료하셨어요!");
     } finally {
       setSummaryLoading(false);
     }
