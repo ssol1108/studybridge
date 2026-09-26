@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SUBJECTS } from "@/data/curriculum";
+import { isGradeTypical } from "@/lib/gradeLevel";
 import { Grade } from "@/types";
 
 const GRADES: Grade[] = ["고1", "고2", "고3"];
@@ -55,6 +56,7 @@ export default function TopicForm({
 
   const subjectsInCategory = SUBJECTS_BY_CATEGORY[category];
   const subject = subjectsInCategory.find((s) => s.id === subjectId)!;
+  const gradeMismatch = !isGradeTypical(grade, subject.typicalGrade);
 
   return (
     <form
@@ -118,6 +120,14 @@ export default function TopicForm({
           </select>
         </div>
       </div>
+
+      {gradeMismatch && (
+        <p className="-mt-2 text-xs text-amber-600">
+          ⚠ &ldquo;{subject.name}&rdquo;은(는) 보통 {subject.typicalGrade}에서 배우는
+          과목이에요. {grade}이 아직 안 배웠을 수 있는 내용이라, 더 기초적인 설명 위주로
+          진행할게요.
+        </p>
+      )}
 
       {subject.units.length > 0 && (
         <div>

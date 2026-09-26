@@ -6,7 +6,7 @@ const MAX_MAJOR_LENGTH = 60;
 
 // 기능 1: 과목(+단원) x 전공/관심분야 -> 융합 탐구 주제 제안
 export async function POST(req: NextRequest) {
-  const { subject, unit, major, grade } = await req.json();
+  const { subject, unit, major, grade, levelNote } = await req.json();
 
   if (!subject || !major || !grade) {
     return NextResponse.json(
@@ -33,7 +33,9 @@ export async function POST(req: NextRequest) {
 
   const user = `과목: ${subject}${unit ? ` (단원: ${unit})` : ""}
 학생 학년: ${grade}
-학생 전공/관심분야: <student_input>${trimmedMajor}</student_input>`;
+학생 전공/관심분야: <student_input>${trimmedMajor}</student_input>${
+    levelNote ? `\n참고: ${levelNote}` : ""
+  }`;
 
   try {
     const raw = await askClaude(system, user);

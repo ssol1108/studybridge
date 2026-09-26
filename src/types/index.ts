@@ -4,6 +4,9 @@ export interface Subject {
   id: string;
   name: string;
   category: string;
+  // 이 과목을 보통 배우는 학년대. 공통 과목은 "고1", 그 외 일반/진로/융합선택은
+  // 학교마다 편성이 달라 "고2~3"로 뭉뚱그림, 예체능은 매 학년 개설되는 경우가 많아 "고1~3".
+  typicalGrade: string;
   units: string[];
 }
 

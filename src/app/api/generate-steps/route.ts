@@ -4,7 +4,11 @@ import { ConceptStep, PaperSummary } from "@/types";
 
 // 기능 3, 4: 논문 이해에 필요한 배경지식을 단계별(개념 설명 + 퀴즈)로 생성
 export async function POST(req: NextRequest) {
-  const { paper, grade }: { paper: PaperSummary; grade: string } = await req.json();
+  const {
+    paper,
+    grade,
+    levelNote,
+  }: { paper: PaperSummary; grade: string; levelNote?: string } = await req.json();
 
   if (!paper || !grade) {
     return NextResponse.json({ error: "paper, grade는 필수입니다." }, { status: 400 });
@@ -31,7 +35,7 @@ export async function POST(req: NextRequest) {
   const user = `학생 학년: ${grade}
 논문 핵심개념: ${paper.coreConcepts.join(", ")}
 논문 방법: ${paper.method}
-논문 결과: ${paper.results}`;
+논문 결과: ${paper.results}${levelNote ? `\n참고: ${levelNote}` : ""}`;
 
   try {
     const raw = await askClaude(system, user);

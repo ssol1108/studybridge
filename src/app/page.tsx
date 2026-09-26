@@ -7,6 +7,7 @@ import PaperList, { PaperStatus } from "@/components/PaperList";
 import LearningStep from "@/components/LearningStep";
 import StepIndicator from "@/components/StepIndicator";
 import { SUBJECTS } from "@/data/curriculum";
+import { buildLevelNote } from "@/lib/gradeLevel";
 import { ConceptStep, PaperSummary, TopicSuggestion } from "@/types";
 
 type Stage = "topic-form" | "topic-result" | "papers" | "learning" | "done";
@@ -30,6 +31,7 @@ const STAGE_LABEL: Record<Stage, string> = {
 export default function Home() {
   const [stage, setStage] = useState<Stage>("topic-form");
   const [grade, setGrade] = useState("");
+  const [levelNote, setLevelNote] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,6 +59,8 @@ export default function Home() {
     setGrade(value.grade);
     try {
       const subject = SUBJECTS.find((s) => s.id === value.subjectId)!;
+      const note = buildLevelNote(value.grade, subject.name, subject.typicalGrade);
+      setLevelNote(note);
       const res = await fetch("/api/suggest-topic", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -65,6 +69,7 @@ export default function Home() {
           unit: value.unit || undefined,
           major: value.major,
           grade: value.grade,
+          levelNote: note,
         }),
       });
       const data = await res.json();
@@ -114,7 +119,7 @@ export default function Home() {
       const res = await fetch("/api/generate-steps", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ paper, grade }),
+        body: JSON.stringify({ paper, grade, levelNote }),
       });
       const data = await res.json();
       setStepsByPaper((prev) => ({ ...prev, [paper.id]: data.steps ?? [] }));
@@ -182,6 +187,7 @@ export default function Home() {
     setCompletedPaperIds(new Set());
     setActivePaperId(null);
     setSummary(null);
+    setLevelNote(undefined);
   }
 
   const activeSteps = activePaperId ? stepsByPaper[activePaperId] : undefined;
