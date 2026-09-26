@@ -85,25 +85,11 @@
   { "id": "info-3", "name": "데이터과학", "category": "정보과", "units": [] },
   { "id": "info-4", "name": "소프트웨어와 생활", "category": "정보과", "units": [] },
 
-  { "id": "pe-1", "name": "체육1", "category": "체육과", "units": [] },
-  { "id": "pe-2", "name": "체육2", "category": "체육과", "units": [] },
-  { "id": "pe-3", "name": "운동과 건강", "category": "체육과", "units": [] },
-  { "id": "pe-4", "name": "스포츠 문화", "category": "체육과", "units": [] },
-  { "id": "pe-5", "name": "스포츠 과학", "category": "체육과", "units": [] },
-  { "id": "pe-6", "name": "스포츠 생활1", "category": "체육과", "units": [] },
-  { "id": "pe-7", "name": "스포츠 생활2", "category": "체육과", "units": [] },
+  { "id": "pe-1", "name": "체육", "category": "체육과", "units": [] },
 
   { "id": "music-1", "name": "음악", "category": "음악과", "units": [] },
-  { "id": "music-2", "name": "음악 연주와 창작", "category": "음악과", "units": [] },
-  { "id": "music-3", "name": "음악 감상과 비평", "category": "음악과", "units": [] },
-  { "id": "music-4", "name": "음악과 미디어", "category": "음악과", "units": [] },
 
   { "id": "art-1", "name": "미술", "category": "미술과", "units": [] },
-  { "id": "art-2", "name": "미술 창작", "category": "미술과", "units": [] },
-  { "id": "art-3", "name": "미술 감상과 비평", "category": "미술과", "units": [] },
-  { "id": "art-4", "name": "미술과 매체", "category": "미술과", "units": [] },
-
-  { "id": "drama-1", "name": "연극", "category": "연극과", "units": [] },
 
   { "id": "eng-1", "name": "공통영어1", "category": "영어과", "units": [] },
   { "id": "eng-2", "name": "공통영어2", "category": "영어과", "units": [] },
