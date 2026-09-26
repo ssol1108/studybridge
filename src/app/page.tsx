@@ -89,7 +89,11 @@ export default function Home() {
       const res = await fetch("/api/find-papers", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ topic: topic.title, grade }),
+        body: JSON.stringify({
+          topic: topic.title,
+          searchQuery: topic.searchQuery,
+          grade,
+        }),
       });
       const data = await res.json();
       setSelectedTopic(topic);

@@ -6,13 +6,15 @@ const SEMANTIC_SCHOLAR_URL = "https://api.semanticscholar.org/graph/v1/paper/sea
 
 // 기능 2: 주제 기반 논문 검색 + 학생 눈높이로 핵심 내용 재구성
 export async function POST(req: NextRequest) {
-  const { topic, grade } = await req.json();
+  const { topic, searchQuery, grade } = await req.json();
 
   if (!topic || !grade) {
     return NextResponse.json({ error: "topic, grade는 필수입니다." }, { status: 400 });
   }
 
-  const rawPapers = await searchPapers(topic);
+  // Semantic Scholar는 영어 논문 위주라 한국어 topic을 그대로 검색하면 결과가 거의 안 나온다.
+  // suggest-topic이 만들어준 영어 searchQuery로 검색하고, 없으면(구버전 호출 등) topic으로 대체.
+  const rawPapers = await searchPapers(searchQuery || topic);
 
   if (!hasClaudeKey()) {
     return NextResponse.json({ papers: mockPapers(topic) });
@@ -26,6 +28,10 @@ coreConcepts(핵심개념) 개수는 절대 2개로 제한하지 말고, 그 논
 개념 수만큼 자유롭게 나열해 (보통 2~6개 정도이지만 논문 내용에 따라 더 많아도 됨).
 각 핵심개념은 이후 학생이 배경지식을 단계별로 학습할 하나의 단계가 되니, 서로 구별되는
 독립적인 개념으로 나눠줘.
+중요: 검색된 논문 후보 목록이 비어 있으면, 절대 실존하는 논문인 것처럼 저자명·연도를
+지어내지 마. 대신 title을 "(예시) ..."로 시작하고 authors는 "실제 논문 아님 - 예시"라고
+명시해서, 학생이 이게 진짜 논문이 아니라 이 주제에서 나올 법한 연구 방향의 예시라는 걸
+분명히 알 수 있게 해.
 반드시 JSON 배열로만 답해. 각 항목은
 {"title":"","authors":"","year":0,"url":"","background":"","purpose":"","coreConcepts":["...필요한 만큼"],"method":"","results":""} 형식이어야 해.`;
 
@@ -47,13 +53,20 @@ ${JSON.stringify(rawPapers, null, 2)}`;
   }
 }
 
-// Semantic Scholar 무료 API로 관련 논문 메타데이터를 가져온다 (키 불필요, rate limit 있음).
-async function searchPapers(topic: string) {
+// Semantic Scholar 논문 메타데이터 검색.
+// query는 영어 키워드여야 검색이 잘 된다 (한국어로 넣으면 결과가 거의 안 나옴).
+// 키 없이 쓰면 IP당 rate limit이 매우 낮아 공유 환경에서는 429가 자주 뜬다 — 이땐 그냥
+// 빈 배열을 반환하고, find-papers 프롬프트가 "실제 논문 아님"을 명시하도록 처리해둠.
+// SEMANTIC_SCHOLAR_API_KEY를 넣으면 훨씬 높은 한도로 검색된다 (무료 신청 가능).
+async function searchPapers(query: string) {
   try {
     const url = `${SEMANTIC_SCHOLAR_URL}?query=${encodeURIComponent(
-      topic
+      query
     )}&limit=5&fields=title,authors,year,abstract,url`;
-    const res = await fetch(url);
+    const apiKey = process.env.SEMANTIC_SCHOLAR_API_KEY;
+    const res = await fetch(url, {
+      headers: apiKey ? { "x-api-key": apiKey } : undefined,
+    });
     if (!res.ok) return [];
     const data = await res.json();
     return data.data ?? [];

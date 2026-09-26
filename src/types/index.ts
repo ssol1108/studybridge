@@ -16,6 +16,9 @@ export interface TopicSuggestion {
   description: string;
   relatedUnit?: string;
   relatedMajor: string;
+  // Semantic Scholar 등 해외 논문 DB 검색용 영어 키워드.
+  // 한국어 title을 그대로 검색어로 쓰면 영어 위주 DB에서 결과가 거의 안 나오기 때문에 별도로 둠.
+  searchQuery: string;
 }
 
 export interface PaperSummary {
