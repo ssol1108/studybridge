@@ -118,8 +118,15 @@
   거짓 메시지가 안 뜨게 하려는 의도.
 - 각 API route는 Claude 응답을 JSON 배열로 강제하는 프롬프트를 쓰고, 파싱 실패 시
   mock 데이터로 fallback — 프롬프트를 바꿀 때 이 파싱 계약(JSON 배열)을 유지할 것.
+- **모든 fetch 호출은 반드시 `res.ok`를 확인하고, 빈 배열(suggestions/papers/steps)도
+  실패로 취급할 것.** [src/app/page.tsx](src/app/page.tsx)의 4개 핸들러와
+  [LearningStep.tsx](src/components/LearningStep.tsx)의 `checkQuiz`가 전부 이 패턴을 따름 —
+  `res.ok`가 아니거나 결과가 비어 있으면 `throw new Error(data.error || "...")`로 던지고
+  `catch`에서 `err.message`를 그대로 `setError`에 넣음. 이걸 빼먹으면 서버가 400/500을
+  줘도 조용히 빈 배열로 다음 단계에 진입해서, 클릭할 것도 없고 이유도 안 보이는 빈 화면에
+  갇히는 실제 버그가 있었음(발견 당시 수정함).
 - 디자인 토큰(accent 색 등)은 [src/app/globals.css](src/app/globals.css)의 `--accent`/
-  `--accent-hover` 변수 하나로 관리됨 (현재 `#0A6EFF`). `color-scheme: light`를 전역으로
+  `--accent-hover` 변수 하나로 관리됨 (현재 `#2C509E`). `color-scheme: light`를 전역으로
   고정해뒀는데, 이건 다크모드 대응을 안 해서가 아니라 실제로 겪은 버그(다크모드에서
   select/input 텍스트가 배경과 같은 색이 되어 안 보이던 문제) 때문에 의도적으로 막아둔 것 —
   다크모드를 다시 넣으려면 모든 폼 요소에 명시적 라이트/다크 색상을 다 지정해야 함.
