@@ -71,6 +71,15 @@
    - 전체 흐름(주제→논문→학습 단계) 오케스트레이션: [src/app/page.tsx](src/app/page.tsx)
      (현재는 세션 내 React state로만 진행 상태를 관리 — 새로고침하면 초기화됨)
 
+5. **완료 페이지 + 학습 정리글 (4단계)**
+   - 논문 3개를 전부 완료(`completedPaperIds`가 papers 전체를 커버)하면 "papers"가 아니라
+     별도 `"done"` stage로 이동 (스텝 인디케이터도 4로 감).
+   - 정리글은 [src/app/api/summarize-learning/route.ts](src/app/api/summarize-learning/route.ts)가
+     생성. 입력은 선택된 주제(`selectedTopic.title`) + 논문 3개(title/coreConcepts/purpose/results),
+     출력은 3~5문단짜리 종합 정리 텍스트 (JSON 아님, 순수 텍스트 그대로 반환).
+   - `selectedTopic`은 `handleTopicSelect`에서 저장해둠 — 이게 없으면 정리글 생성 API를
+     호출할 주제 제목을 알 수 없음.
+
 ## 아키텍처 메모
 
 - Next.js App Router 하나로 프론트엔드 + API Routes(백엔드)를 함께 운영.
