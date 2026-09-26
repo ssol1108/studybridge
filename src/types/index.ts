@@ -3,6 +3,7 @@ export type Grade = "고1" | "고2" | "고3";
 export interface Subject {
   id: string;
   name: string;
+  category: string;
   units: string[];
 }
 

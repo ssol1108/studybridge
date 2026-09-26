@@ -6,6 +6,15 @@ import { Grade } from "@/types";
 
 const GRADES: Grade[] = ["고1", "고2", "고3"];
 
+// 과목이 100개가 넘어서 드롭다운에서 교과군(category)별로 묶어서 보여준다.
+const SUBJECTS_BY_CATEGORY = SUBJECTS.reduce<Record<string, typeof SUBJECTS>>(
+  (groups, subject) => {
+    (groups[subject.category] ??= []).push(subject);
+    return groups;
+  },
+  {}
+);
+
 export interface TopicFormValue {
   subjectId: string;
   unit: string;
@@ -60,10 +69,14 @@ export default function TopicForm({
             setUnit("");
           }}
         >
-          {SUBJECTS.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.name}
-            </option>
+          {Object.entries(SUBJECTS_BY_CATEGORY).map(([category, subjects]) => (
+            <optgroup key={category} label={category}>
+              {subjects.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
       </div>
