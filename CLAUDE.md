@@ -162,6 +162,13 @@
   이 값을 직접 키워드로 쓰는 게 아니라 항상 Claude가 먼저 해석해서 탐구 주제로 바꾸기 때문에
   제한할 기술적 이유가 없음. 대신 길이 제한(60자, 클라이언트+서버 이중)과 프롬프트 내
   `<student_input>` 태그로 최소한의 프롬프트 주입 방지만 해둠.
+- **접근성**: 폼 필드는 전부 `id`/`htmlFor`로 라벨 연결됨(TopicForm). 퀴즈 문항은
+  `role="radiogroup" aria-labelledby`(4지선다)와 `aria-labelledby`(단답형 input)로 질문
+  텍스트와 연결됨 — 새 퀴즈 문항 타입을 추가하면 이 라벨링도 같이 해줄 것. 에러/로딩/퀴즈
+  결과 배너는 `role="alert"` 또는 `role="status" aria-live="polite"`로 스크린리더에 자동
+  전달됨. `StepIndicator`는 모바일에서 텍스트 라벨이 `hidden sm:block`으로 시각적으로만
+  숨고, `aria-label`/`aria-current="step"`으로 스크린리더에는 항상 전달됨 — 이 aria 속성을
+  건드릴 땐 시각적 숨김과 별개로 유지해야 함. 순수 장식용 이모지(📖, 🎉)는 `aria-hidden`.
 
 ## 아직 없는 것 (다음 작업 후보)
 
