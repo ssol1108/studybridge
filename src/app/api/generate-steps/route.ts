@@ -37,8 +37,12 @@ export async function POST(req: NextRequest) {
 논문 방법: ${paper.method}
 논문 결과: ${paper.results}${levelNote ? `\n참고: ${levelNote}` : ""}`;
 
+  // 개념 하나당 설명+퀴즈 3문제로 대략 700토큰 정도 필요. 개념이 많은 논문(최대 6개+)에서
+  // 기본 4096으로는 응답이 중간에 잘려 JSON 파싱이 깨질 수 있어 개념 수에 비례해 늘림.
+  const maxTokens = Math.min(8192, 700 * paper.coreConcepts.length + 1000);
+
   try {
-    const raw = await askClaude(system, user);
+    const raw = await askClaude(system, user, maxTokens);
     const parsed = JSON.parse(extractJson(raw));
     const steps: ConceptStep[] = parsed.map(
       (s: Omit<ConceptStep, "id" | "quiz"> & { quiz: Array<Omit<ConceptStep["quiz"][number], "id">> }, i: number) => ({
@@ -48,7 +52,8 @@ export async function POST(req: NextRequest) {
       })
     );
     return NextResponse.json({ steps });
-  } catch {
+  } catch (err) {
+    console.error("generate-steps: Claude 호출/파싱 실패, mock으로 대체", err);
     return NextResponse.json({ steps: mockSteps(paper) });
   }
 }
@@ -63,7 +68,7 @@ function mockSteps(paper: PaperSummary): ConceptStep[] {
     id: `mock-step-${i}`,
     order: i + 1,
     concept,
-    explanation: `"${concept}"에 대한 학생 눈높이 설명입니다. (ANTHROPIC_API_KEY 미설정 상태의 예시 데이터)`,
+    explanation: `"${concept}"에 대한 학생 눈높이 설명입니다. (예시 데이터 - 실시간 생성 대신 표시됨)`,
     quiz: [
       {
         id: `mock-step-${i}-q1`,

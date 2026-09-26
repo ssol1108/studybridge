@@ -44,7 +44,8 @@ ${papers
   try {
     const summary = await askClaude(system, user);
     return NextResponse.json({ summary: summary.trim() });
-  } catch {
+  } catch (err) {
+    console.error("summarize-learning: Claude 호출 실패, mock으로 대체", err);
     return NextResponse.json({ summary: mockSummary(topic, papers) });
   }
 }
@@ -60,7 +61,7 @@ function mockSummary(topic: string, papers: PaperSummary[]): string {
 ${paperLines}
 
 각 논문은 서로 다른 각도에서 이 주제에 접근하고 있지만, 공통적으로 주제가 다루는 핵심 현상을
-설명하는 데 필요한 개념들을 제공합니다. (ANTHROPIC_API_KEY 미설정 상태의 예시 정리글입니다.)
+설명하는 데 필요한 개념들을 제공합니다. (예시 정리글 - 실시간 생성 대신 표시됨)
 
 수고했어요! 이제 이 논문들의 핵심 내용을 스스로의 언어로 설명할 수 있을 거예요.`;
 }

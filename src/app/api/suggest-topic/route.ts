@@ -51,7 +51,8 @@ injury prevention" 같은 식). 반드시 JSON 배열로만 답해. 각 항목�
       ...s,
     }));
     return NextResponse.json({ suggestions });
-  } catch {
+  } catch (err) {
+    console.error("suggest-topic: Claude 호출/파싱 실패, mock으로 대체", err);
     return NextResponse.json({ suggestions: mockSuggestions(subject, unit, trimmedMajor) });
   }
 }
@@ -69,7 +70,7 @@ function mockSuggestions(subject: string, unit: string | undefined, major: strin
     {
       id: "mock-1",
       title: `${subject}${unit ? `(${unit})` : ""}와 ${major}의 접점 탐구`,
-      description: `${subject}에서 배우는 핵심 개념을 ${major} 분야의 실제 문제에 적용해보는 융합 탐구 주제입니다. (ANTHROPIC_API_KEY 미설정 상태의 예시 데이터)`,
+      description: `${subject}에서 배우는 핵심 개념을 ${major} 분야의 실제 문제에 적용해보는 융합 탐구 주제입니다. (예시 데이터 - 실시간 생성 대신 표시됨)`,
       relatedUnit: unit,
       relatedMajor: major,
       searchQuery: placeholderQuery,

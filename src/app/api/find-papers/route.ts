@@ -48,7 +48,8 @@ ${JSON.stringify(rawPapers, null, 2)}`;
       ...p,
     }));
     return NextResponse.json({ papers });
-  } catch {
+  } catch (err) {
+    console.error("find-papers: Claude 호출/파싱 실패, mock으로 대체", err);
     return NextResponse.json({ papers: mockPapers(topic) });
   }
 }

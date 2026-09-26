@@ -6,7 +6,11 @@ const MODEL = "claude-sonnet-5";
  * ANTHROPIC_API_KEY가 설정되지 않은 개발 초기 단계에서는 각 API route가
  * 이 함수 대신 mock 데이터를 반환하도록 되어 있다.
  */
-export async function askClaude(systemPrompt: string, userPrompt: string) {
+export async function askClaude(
+  systemPrompt: string,
+  userPrompt: string,
+  maxTokens = 4096
+) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     throw new Error(
@@ -23,7 +27,7 @@ export async function askClaude(systemPrompt: string, userPrompt: string) {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 2048,
+      max_tokens: maxTokens,
       system: systemPrompt,
       messages: [{ role: "user", content: userPrompt }],
     }),
