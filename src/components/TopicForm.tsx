@@ -14,7 +14,20 @@ const SUBJECTS_BY_CATEGORY = SUBJECTS.reduce<Record<string, typeof SUBJECTS>>(
   },
   {}
 );
-const CATEGORIES = Object.keys(SUBJECTS_BY_CATEGORY);
+const CATEGORY_ORDER = [
+  "국어과",
+  "수학과",
+  "영어과",
+  "과학과",
+  "사회과",
+  "정보과",
+  "도덕과",
+  "기술・가정과",
+  "체육과",
+  "음악과",
+  "미술과",
+];
+const CATEGORIES = CATEGORY_ORDER.filter((c) => c in SUBJECTS_BY_CATEGORY);
 
 const fieldClass =
   "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/20";
