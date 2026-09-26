@@ -5,17 +5,26 @@ import TopicForm, { TopicFormValue } from "@/components/TopicForm";
 import TopicResult from "@/components/TopicResult";
 import PaperList from "@/components/PaperList";
 import LearningStep from "@/components/LearningStep";
+import StepIndicator from "@/components/StepIndicator";
 import { SUBJECTS } from "@/data/curriculum";
 import { ConceptStep, PaperSummary, TopicSuggestion } from "@/types";
 
 type Stage = "topic-form" | "topic-result" | "papers" | "learning" | "done";
 
+const STAGE_STEP: Record<Stage, number> = {
+  "topic-form": 1,
+  "topic-result": 1,
+  papers: 2,
+  learning: 3,
+  done: 4,
+};
+
 const STAGE_LABEL: Record<Stage, string> = {
-  "topic-form": "1. 융합 탐구 주제 찾기",
-  "topic-result": "1. 융합 탐구 주제 찾기",
-  papers: "2. 근거 논문 찾기 & 재구성",
-  learning: "3-4. 배경지식 단계별 학습",
-  done: "완료",
+  "topic-form": "융합 탐구 주제를 찾아볼까요?",
+  "topic-result": "마음에 드는 주제를 골라주세요",
+  papers: "관련 논문을 하나 선택해주세요",
+  learning: "배경지식을 단계별로 학습해요",
+  done: "학습을 완료했어요",
 };
 
 export default function Home() {
@@ -103,66 +112,79 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen p-8 sm:p-16 flex flex-col gap-8">
-      <header>
-        <h1 className="text-2xl font-bold">StudyBridge</h1>
-        <p className="text-sm text-gray-500">
-          교육과정 x 전공 융합 탐구 → 논문 학습 → 단계별 배경지식 학습
-        </p>
-      </header>
-
-      <nav className="text-xs text-gray-400">{STAGE_LABEL[stage]}</nav>
-
-      {error && (
-        <div className="text-sm text-red-600 bg-red-50 rounded-md p-3 max-w-2xl">
-          {error}
-        </div>
-      )}
-
-      {stage === "topic-form" && (
-        <TopicForm onSubmit={handleTopicSubmit} loading={loading} />
-      )}
-
-      {stage === "topic-result" && (
-        <TopicResult suggestions={suggestions} onSelect={handleTopicSelect} />
-      )}
-
-      {stage === "papers" && (
-        <PaperList papers={papers} onSelect={handlePaperSelect} />
-      )}
-
-      {stage === "learning" && steps[stepIndex] && (
-        <LearningStep
-          step={steps[stepIndex]}
-          stepIndex={stepIndex}
-          totalSteps={steps.length}
-          onPassed={handleStepPassed}
-        />
-      )}
-
-      {stage === "done" && (
-        <div className="max-w-xl border rounded-lg p-6 flex flex-col gap-3">
-          <h2 className="text-lg font-semibold">모든 배경지식 학습 완료 🎉</h2>
-          <p className="text-sm text-gray-600">
-            이제 선택한 논문의 핵심 내용을 스스로 이해할 준비가 되었어요.
+    <div className="flex min-h-screen justify-center px-4 py-10 sm:py-16">
+      <div className="flex w-full max-w-2xl flex-col gap-8">
+        <header className="flex flex-col items-center gap-2 text-center">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent text-lg font-bold text-white shadow-sm">
+            S
+          </div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+            StudyBridge
+          </h1>
+          <p className="text-sm text-slate-500">
+            교육과정 × 전공 융합 탐구 → 논문 학습 → 단계별 배경지식 학습
           </p>
-          <button
-            className="self-start text-sm underline"
-            onClick={() => {
-              setStage("topic-form");
-              setSuggestions([]);
-              setPapers([]);
-              setSteps([]);
-            }}
-          >
-            새 주제로 다시 시작하기
-          </button>
-        </div>
-      )}
+        </header>
 
-      {loading && (
-        <div className="text-sm text-gray-500">불러오는 중...</div>
-      )}
+        <StepIndicator current={STAGE_STEP[stage]} />
+
+        {error && (
+          <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
+        <main className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/50 sm:p-8">
+          <h2 className="mb-6 text-lg font-semibold text-slate-900">
+            {STAGE_LABEL[stage]}
+          </h2>
+
+          {stage === "topic-form" && (
+            <TopicForm onSubmit={handleTopicSubmit} loading={loading} />
+          )}
+
+          {stage === "topic-result" && (
+            <TopicResult suggestions={suggestions} onSelect={handleTopicSelect} />
+          )}
+
+          {stage === "papers" && (
+            <PaperList papers={papers} onSelect={handlePaperSelect} />
+          )}
+
+          {stage === "learning" && steps[stepIndex] && (
+            <LearningStep
+              step={steps[stepIndex]}
+              stepIndex={stepIndex}
+              totalSteps={steps.length}
+              onPassed={handleStepPassed}
+            />
+          )}
+
+          {stage === "done" && (
+            <div className="flex flex-col items-center gap-3 py-4 text-center">
+              <div className="text-4xl">🎉</div>
+              <p className="text-sm text-slate-600">
+                이제 선택한 논문의 핵심 내용을 스스로 이해할 준비가 되었어요.
+              </p>
+              <button
+                className="mt-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
+                onClick={() => {
+                  setStage("topic-form");
+                  setSuggestions([]);
+                  setPapers([]);
+                  setSteps([]);
+                }}
+              >
+                새 주제로 다시 시작하기
+              </button>
+            </div>
+          )}
+
+          {loading && (
+            <div className="mt-4 text-sm text-slate-400">불러오는 중...</div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }
