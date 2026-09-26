@@ -105,9 +105,17 @@
 ## 아키텍처 메모
 
 - Next.js App Router 하나로 프론트엔드 + API Routes(백엔드)를 함께 운영.
-- LLM 호출은 전부 [src/lib/claude.ts](src/lib/claude.ts)의 `askClaude()`를 통과.
-  `ANTHROPIC_API_KEY`가 없으면 각 API route가 자체 mock 데이터로 응답하므로
-  키 없이도 프론트엔드 흐름 전체를 확인할 수 있음.
+- LLM 호출은 전부 [src/lib/claude.ts](src/lib/claude.ts)의 `askClaude(system, user, maxTokens?)`를
+  통과. `maxTokens` 기본값 4096 — `generate-steps`처럼 출력이 개념 수에 비례해 커지는
+  라우트는 반드시 이걸 개념 수에 맞게 늘려서 호출할 것 (안 그러면 JSON이 중간에 잘려서
+  파싱 실패 → 조용히 mock으로 대체됨). `ANTHROPIC_API_KEY`가 없으면 각 API route가 자체
+  mock 데이터로 응답하므로 키 없이도 프론트엔드 흐름 전체를 확인할 수 있음.
+- 4개 LLM 라우트(suggest-topic/find-papers/generate-steps/summarize-learning) 모두 Claude
+  호출이나 JSON 파싱이 실패하면 `catch`에서 `console.error`로 로그를 남기고 mock으로
+  대체함 — 실제 키를 넣고도 계속 예시 데이터만 나온다면 서버 로그(콘솔)부터 확인할 것.
+  mock 문구는 "API_KEY 미설정"이라고 단정하지 않고 "실시간 생성 대신 표시됨" 정도로
+  중립적으로 씀 — 키가 있는데 다른 이유(파싱 실패, rate limit 등)로 실패한 경우에도
+  거짓 메시지가 안 뜨게 하려는 의도.
 - 각 API route는 Claude 응답을 JSON 배열로 강제하는 프롬프트를 쓰고, 파싱 실패 시
   mock 데이터로 fallback — 프롬프트를 바꿀 때 이 파싱 계약(JSON 배열)을 유지할 것.
 - 디자인 토큰(accent 색 등)은 [src/app/globals.css](src/app/globals.css)의 `--accent`/
