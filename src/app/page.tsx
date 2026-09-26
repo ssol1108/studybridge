@@ -29,10 +29,19 @@ const STAGE_STEP: Record<Stage, number> = {
 const STAGE_LABEL: Record<Stage, string> = {
   "topic-form": "융합 탐구 주제를 찾아볼까요?",
   "topic-result": "마음에 드는 주제를 골라주세요",
-  papers: "논문 3개를 하나씩 학습해보세요",
+  papers: "논문을 하나씩 학습해보세요",
   learning: "배경지식을 단계별로 학습해요",
   done: "학습을 모두 완료했어요",
 };
+
+// "papers" 단계는 실제 논문 개수가 (최대 3개, 검색 결과에 따라 1~2개일 수도 있음) 고정이
+// 아니라서, 제목에 "3개"라고 못 박지 않고 실제 개수를 반영해야 함.
+function getStageLabel(stage: Stage, paperCount: number): string {
+  if (stage === "papers" && paperCount > 0) {
+    return `논문 ${paperCount}개를 하나씩 학습해보세요`;
+  }
+  return STAGE_LABEL[stage];
+}
 
 const LOADING_LABEL: Partial<Record<Stage, string>> = {
   "topic-result": "논문을 찾는 중이에요...",
@@ -309,6 +318,21 @@ export default function Home() {
     clearSession();
   }
 
+  // 헤더의 "처음부터 다시 시작"은 어디서든 누를 수 있는데, papers/learning 단계에서는
+  // 논문 학습 진행 상황(퀴즈 통과 여부 등)이 걸려 있어서 실수로 누르면 되돌릴 수 없이
+  // 다 날아간다. topic-result(주제 3개 추천만 받은 상태)는 다시 만드는 비용이 낮아 확인 없이
+  // 바로 리셋해도 괜찮다고 판단.
+  function handleHeaderReset() {
+    const hasValuableProgress = stage === "papers" || stage === "learning";
+    if (
+      hasValuableProgress &&
+      !window.confirm("정말 처음부터 다시 시작할까요? 지금까지의 학습 진행 상황이 모두 사라져요.")
+    ) {
+      return;
+    }
+    resetAll();
+  }
+
   const activeSteps = activePaperId ? stepsByPaper[activePaperId] : undefined;
   const activeStepIndex = activePaperId ? stepIndexByPaper[activePaperId] ?? 0 : 0;
   const activeStep = activeSteps?.[activeStepIndex];
@@ -324,7 +348,7 @@ export default function Home() {
           {stage !== "topic-form" && (
             <button
               className="text-xs text-slate-400 underline hover:text-slate-600"
-              onClick={resetAll}
+              onClick={handleHeaderReset}
             >
               처음부터 다시 시작
             </button>
@@ -354,7 +378,7 @@ export default function Home() {
 
         <main className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/50 sm:p-8">
           <h2 className="mb-6 text-lg font-semibold text-slate-900">
-            {STAGE_LABEL[stage]}
+            {getStageLabel(stage, papers.length)}
           </h2>
 
           {loading && LOADING_LABEL[stage] && (
