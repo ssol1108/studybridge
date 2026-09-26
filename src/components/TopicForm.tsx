@@ -146,6 +146,7 @@ export default function TopicForm({
           placeholder="예: 심리학, 컴퓨터공학, 환경공학..."
           value={major}
           onChange={(e) => setMajor(e.target.value)}
+          maxLength={60}
           required
         />
       </div>
