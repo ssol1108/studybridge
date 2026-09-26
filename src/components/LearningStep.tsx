@@ -3,8 +3,18 @@
 import { useState } from "react";
 import { ConceptStep, QuizAnswer, QuizAttemptResult } from "@/types";
 
+type MultipleChoiceQuestion = Extract<ConceptStep["quiz"][number], { type: "multiple-choice" }>;
+
+// 이 조건은 아래 렌더링에서 4지선다 UI를 보여줄지 판단하는 조건과 반드시 같아야 한다
+// (Claude 응답이 스키마를 벗어나 options가 없는 경우 텍스트 입력으로 대체 표시하기 때문).
+function isRenderableMultipleChoice(
+  q: ConceptStep["quiz"][number]
+): q is MultipleChoiceQuestion {
+  return q.type === "multiple-choice" && Array.isArray(q.options);
+}
+
 function emptyAnswers(step: ConceptStep): QuizAnswer[] {
-  return step.quiz.map((q) => (q.type === "short-answer" ? "" : -1));
+  return step.quiz.map((q) => (isRenderableMultipleChoice(q) ? -1 : ""));
 }
 
 function isAnswered(answer: QuizAnswer): boolean {
@@ -93,7 +103,7 @@ export default function LearningStep({
             <div className="mb-3 text-sm font-medium text-slate-900">
               Q{qi + 1}. {q.question}
             </div>
-            {q.type === "multiple-choice" ? (
+            {isRenderableMultipleChoice(q) ? (
               <div className="flex flex-col gap-2">
                 {q.options.map((opt, oi) => {
                   const selected = answers[qi] === oi;

@@ -38,6 +38,9 @@ function isCorrect(question: QuizQuestion, answer: QuizAnswer): boolean {
   }
   // 단답형: LLM 채점 없이, 정답으로 인정할 표현 목록과 정규화 비교로 판정한다
   // (공백 제거, 소문자화). 비용/지연 없이 바로 채점하기 위한 절충.
+  // Claude 응답이 스키마를 벗어나 acceptableAnswers가 없거나 배열이 아닐 수도 있으니
+  // (예: type이 오타이거나 필드가 누락된 경우) 방어적으로 체크 — 없으면 그냥 오답 처리.
+  if (!Array.isArray(question.acceptableAnswers)) return false;
   if (typeof answer !== "string") return false;
   const normalized = normalize(answer);
   if (!normalized) return false;
