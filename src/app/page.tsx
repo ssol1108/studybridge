@@ -345,7 +345,7 @@ export default function Home() {
     <div className="flex min-h-screen justify-center px-4 py-10 sm:py-16">
       <div className="flex w-full max-w-2xl flex-col gap-8">
         <header className="flex flex-col items-center gap-2 text-center">
-          <div className="text-4xl">📖</div>
+          <div aria-hidden="true" className="text-4xl">📖</div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             StudyBridge
           </h1>
@@ -362,7 +362,10 @@ export default function Home() {
         <StepIndicator current={STAGE_STEP[stage]} />
 
         {showRestoredBanner && (
-          <div className="flex items-center justify-between gap-3 rounded-xl bg-accent/5 px-4 py-3 text-sm text-slate-600">
+          <div
+            role="status"
+            className="flex items-center justify-between gap-3 rounded-xl bg-accent/5 px-4 py-3 text-sm text-slate-600"
+          >
             <span>이전에 하던 학습을 이어서 보고 있어요.</span>
             <button
               className="shrink-0 text-slate-400 hover:text-slate-600"
@@ -375,7 +378,10 @@ export default function Home() {
         )}
 
         {error && (
-          <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
+          <div
+            role="alert"
+            className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-600"
+          >
             {error}
           </div>
         )}
@@ -386,7 +392,11 @@ export default function Home() {
           </h2>
 
           {loading && LOADING_LABEL[stage] && (
-            <div className="mb-4 flex items-center gap-2 text-sm text-slate-500">
+            <div
+              role="status"
+              aria-live="polite"
+              className="mb-4 flex items-center gap-2 text-sm text-slate-500"
+            >
               <Spinner />
               {LOADING_LABEL[stage]}
             </div>
@@ -456,7 +466,7 @@ export default function Home() {
           {stage === "done" && (
             <div className="flex flex-col gap-5">
               <div className="flex flex-col items-center gap-2 text-center">
-                <div className="text-4xl">🎉</div>
+                <div aria-hidden="true" className="text-4xl">🎉</div>
                 <p className="text-sm text-slate-600">
                   논문 {papers.length}편 학습을 모두 완료하고 퀴즈까지 통과했어요.
                   배운 내용을 정리해봤어요.

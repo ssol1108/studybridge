@@ -76,8 +76,9 @@ export default function TopicForm({
       }}
     >
       <div>
-        <label className={labelClass}>학년</label>
+        <label className={labelClass} htmlFor="tf-grade">학년</label>
         <select
+          id="tf-grade"
           className={fieldClass}
           value={grade}
           onChange={(e) => setGrade(e.target.value as Grade)}
@@ -92,8 +93,9 @@ export default function TopicForm({
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>교과</label>
+          <label className={labelClass} htmlFor="tf-category">교과</label>
           <select
+            id="tf-category"
             className={fieldClass}
             value={category}
             onChange={(e) => {
@@ -112,8 +114,9 @@ export default function TopicForm({
         </div>
 
         <div>
-          <label className={labelClass}>과목</label>
+          <label className={labelClass} htmlFor="tf-subject">과목</label>
           <select
+            id="tf-subject"
             className={fieldClass}
             value={subjectId}
             onChange={(e) => {
@@ -140,10 +143,11 @@ export default function TopicForm({
 
       {subject.units.length > 0 && (
         <div>
-          <label className={labelClass}>
+          <label className={labelClass} htmlFor="tf-unit">
             단원 <span className="font-normal text-slate-400">(선택)</span>
           </label>
           <select
+            id="tf-unit"
             className={fieldClass}
             value={unit}
             onChange={(e) => setUnit(e.target.value)}
@@ -159,8 +163,9 @@ export default function TopicForm({
       )}
 
       <div>
-        <label className={labelClass}>전공 / 관심 분야</label>
+        <label className={labelClass} htmlFor="tf-major">전공 / 관심 분야</label>
         <input
+          id="tf-major"
           className={fieldClass}
           placeholder="예: 심리학, 컴퓨터공학, 환경공학..."
           value={major}

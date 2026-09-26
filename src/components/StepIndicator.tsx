@@ -7,9 +7,16 @@ export default function StepIndicator({ current }: { current: number }) {
         const stepNum = i + 1;
         const state =
           stepNum < current ? "done" : stepNum === current ? "active" : "upcoming";
+        const stateSuffix =
+          state === "done" ? " (완료)" : state === "active" ? " (진행 중)" : "";
         return (
-          <li key={label} className="flex items-center gap-2 sm:gap-3">
-            <div className="flex flex-col items-center gap-1.5">
+          <li
+            key={label}
+            className="flex items-center gap-2 sm:gap-3"
+            aria-label={`${stepNum}단계: ${label}${stateSuffix}`}
+            aria-current={state === "active" ? "step" : undefined}
+          >
+            <div aria-hidden="true" className="flex flex-col items-center gap-1.5">
               <div
                 className={[
                   "flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-colors",
@@ -35,6 +42,7 @@ export default function StepIndicator({ current }: { current: number }) {
             </div>
             {stepNum < STEPS.length && (
               <div
+                aria-hidden="true"
                 className={[
                   "h-px w-6 sm:w-10",
                   stepNum < current ? "bg-accent" : "bg-slate-200",

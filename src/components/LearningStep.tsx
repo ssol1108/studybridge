@@ -98,13 +98,19 @@ export default function LearningStep({
       </div>
 
       <div className="flex flex-col gap-4">
-        {step.quiz.map((q, qi) => (
+        {step.quiz.map((q, qi) => {
+          const questionId = `${q.id}-question`;
+          return (
           <div key={q.id} className="rounded-xl border border-slate-200 p-4">
-            <div className="mb-3 text-sm font-medium text-slate-900">
+            <div id={questionId} className="mb-3 text-sm font-medium text-slate-900">
               Q{qi + 1}. {q.question}
             </div>
             {isRenderableMultipleChoice(q) ? (
-              <div className="flex flex-col gap-2">
+              <div
+                className="flex flex-col gap-2"
+                role="radiogroup"
+                aria-labelledby={questionId}
+              >
                 {q.options.map((opt, oi) => {
                   const selected = answers[qi] === oi;
                   return (
@@ -138,6 +144,7 @@ export default function LearningStep({
             ) : (
               <input
                 type="text"
+                aria-labelledby={questionId}
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-slate-50"
                 placeholder="정답을 입력하세요"
                 value={answers[qi]}
@@ -152,11 +159,14 @@ export default function LearningStep({
               />
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{error}</div>
+        <div role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+          {error}
+        </div>
       )}
 
       {!result && (
@@ -171,6 +181,8 @@ export default function LearningStep({
 
       {result && (
         <div
+          role="status"
+          aria-live="polite"
           className={`rounded-xl p-4 text-sm ${
             result.passed
               ? "bg-emerald-50 text-emerald-800"
