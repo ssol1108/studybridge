@@ -10,6 +10,12 @@ const BUTTON_LABEL: Record<PaperStatus, string> = {
   done: "다시 학습하기 →",
 };
 
+const BUTTON_CLASS: Record<PaperStatus, string> = {
+  new: "bg-accent text-white hover:bg-accent-hover",
+  "in-progress": "bg-accent text-white hover:bg-accent-hover",
+  done: "border border-accent text-accent hover:bg-accent/5",
+};
+
 export default function PaperList({
   papers,
   onSelect,
@@ -70,7 +76,7 @@ export default function PaperList({
             <Field label="연구 방법" value={p.method} />
             <Field label="연구 결과" value={p.results} />
             <button
-              className="self-start text-sm font-medium text-accent hover:text-accent-hover"
+              className={`self-start rounded-lg px-4 py-2 text-sm font-medium transition-colors ${BUTTON_CLASS[status]}`}
               onClick={() => onSelect(p)}
             >
               {BUTTON_LABEL[status]}

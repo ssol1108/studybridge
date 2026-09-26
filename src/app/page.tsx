@@ -9,7 +9,23 @@ import StepIndicator from "@/components/StepIndicator";
 import { SUBJECTS } from "@/data/curriculum";
 import { ConceptStep, PaperSummary, TopicSuggestion } from "@/types";
 
-type Stage = "topic-form" | "topic-result" | "papers" | "learning";
+type Stage = "topic-form" | "topic-result" | "papers" | "learning" | "done";
+
+const STAGE_STEP: Record<Stage, number> = {
+  "topic-form": 1,
+  "topic-result": 1,
+  papers: 2,
+  learning: 3,
+  done: 4,
+};
+
+const STAGE_LABEL: Record<Stage, string> = {
+  "topic-form": "융합 탐구 주제를 찾아볼까요?",
+  "topic-result": "마음에 드는 주제를 골라주세요",
+  papers: "논문 3개를 하나씩 학습해보세요",
+  learning: "배경지식을 단계별로 학습해요",
+  done: "학습을 모두 완료했어요",
+};
 
 export default function Home() {
   const [stage, setStage] = useState<Stage>("topic-form");
@@ -18,6 +34,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   const [suggestions, setSuggestions] = useState<TopicSuggestion[]>([]);
+  const [selectedTopic, setSelectedTopic] = useState<TopicSuggestion | null>(null);
   const [papers, setPapers] = useState<PaperSummary[]>([]);
 
   const [activePaperId, setActivePaperId] = useState<string | null>(null);
@@ -25,28 +42,8 @@ export default function Home() {
   const [stepIndexByPaper, setStepIndexByPaper] = useState<Record<string, number>>({});
   const [completedPaperIds, setCompletedPaperIds] = useState<Set<string>>(new Set());
 
-  const allPapersDone =
-    papers.length > 0 && papers.every((p) => completedPaperIds.has(p.id));
-
-  const stepNumber =
-    stage === "topic-form" || stage === "topic-result"
-      ? 1
-      : stage === "papers"
-        ? allPapersDone
-          ? 4
-          : 2
-        : 3;
-
-  const stageLabel =
-    stage === "topic-form"
-      ? "융합 탐구 주제를 찾아볼까요?"
-      : stage === "topic-result"
-        ? "마음에 드는 주제를 골라주세요"
-        : stage === "papers"
-          ? allPapersDone
-            ? "논문 3개 학습을 모두 완료했어요"
-            : "논문 3개를 하나씩 학습해보세요"
-          : "배경지식을 단계별로 학습해요";
+  const [summary, setSummary] = useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
 
   function statusOf(paperId: string): PaperStatus {
     if (completedPaperIds.has(paperId)) return "done";
@@ -90,6 +87,7 @@ export default function Home() {
         body: JSON.stringify({ topic: topic.title, grade }),
       });
       const data = await res.json();
+      setSelectedTopic(topic);
       setPapers(data.papers ?? []);
       setCompletedPaperIds(new Set());
       setStepsByPaper({});
@@ -129,6 +127,29 @@ export default function Home() {
     }
   }
 
+  async function generateSummary(finishedPaperIds: Set<string>) {
+    if (!selectedTopic) return;
+    setSummaryLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/summarize-learning", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          topic: selectedTopic.title,
+          papers: papers.filter((p) => finishedPaperIds.has(p.id)),
+          grade,
+        }),
+      });
+      const data = await res.json();
+      setSummary(data.summary ?? null);
+    } catch {
+      setError("정리글 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setSummaryLoading(false);
+    }
+  }
+
   function handleStepPassed() {
     if (!activePaperId) return;
     const steps = stepsByPaper[activePaperId] ?? [];
@@ -136,8 +157,17 @@ export default function Home() {
 
     if (currentIndex + 1 < steps.length) {
       setStepIndexByPaper((prev) => ({ ...prev, [activePaperId]: currentIndex + 1 }));
+      return;
+    }
+
+    const nextCompleted = new Set(completedPaperIds).add(activePaperId);
+    setCompletedPaperIds(nextCompleted);
+
+    const allDone = papers.length > 0 && papers.every((p) => nextCompleted.has(p.id));
+    if (allDone) {
+      setStage("done");
+      generateSummary(nextCompleted);
     } else {
-      setCompletedPaperIds((prev) => new Set(prev).add(activePaperId));
       setStage("papers");
     }
   }
@@ -145,11 +175,13 @@ export default function Home() {
   function resetAll() {
     setStage("topic-form");
     setSuggestions([]);
+    setSelectedTopic(null);
     setPapers([]);
     setStepsByPaper({});
     setStepIndexByPaper({});
     setCompletedPaperIds(new Set());
     setActivePaperId(null);
+    setSummary(null);
   }
 
   const activeSteps = activePaperId ? stepsByPaper[activePaperId] : undefined;
@@ -168,7 +200,7 @@ export default function Home() {
           </h1>
         </header>
 
-        <StepIndicator current={stepNumber} />
+        <StepIndicator current={STAGE_STEP[stage]} />
 
         {error && (
           <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
@@ -177,7 +209,9 @@ export default function Home() {
         )}
 
         <main className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/50 sm:p-8">
-          <h2 className="mb-6 text-lg font-semibold text-slate-900">{stageLabel}</h2>
+          <h2 className="mb-6 text-lg font-semibold text-slate-900">
+            {STAGE_LABEL[stage]}
+          </h2>
 
           {stage === "topic-form" && (
             <TopicForm onSubmit={handleTopicSubmit} loading={loading} />
@@ -188,30 +222,13 @@ export default function Home() {
           )}
 
           {stage === "papers" && (
-            <div className="flex flex-col gap-4">
-              {allPapersDone && (
-                <div className="flex flex-col items-center gap-3 rounded-xl bg-emerald-50 p-5 text-center">
-                  <div className="text-3xl">🎉</div>
-                  <p className="text-sm text-emerald-800">
-                    3개 논문 모두 학습을 완료했어요! 이제 각 논문의 핵심 내용을 스스로
-                    이해할 준비가 되었어요.
-                  </p>
-                  <button
-                    className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover"
-                    onClick={resetAll}
-                  >
-                    새 주제로 다시 시작하기
-                  </button>
-                </div>
+            <PaperList
+              papers={papers}
+              onSelect={handlePaperSelect}
+              statusByPaperId={Object.fromEntries(
+                papers.map((p) => [p.id, statusOf(p.id)])
               )}
-              <PaperList
-                papers={papers}
-                onSelect={handlePaperSelect}
-                statusByPaperId={Object.fromEntries(
-                  papers.map((p) => [p.id, statusOf(p.id)])
-                )}
-              />
-            </div>
+            />
           )}
 
           {stage === "learning" && activeStep && (
@@ -229,6 +246,49 @@ export default function Home() {
                 totalSteps={activeSteps?.length ?? 0}
                 onPassed={handleStepPassed}
               />
+            </div>
+          )}
+
+          {stage === "done" && (
+            <div className="flex flex-col gap-5">
+              <div className="flex flex-col items-center gap-2 text-center">
+                <div className="text-4xl">🎉</div>
+                <p className="text-sm text-slate-600">
+                  논문 {papers.length}편 학습을 모두 완료하고 퀴즈까지 통과했어요.
+                  배운 내용을 정리해봤어요.
+                </p>
+              </div>
+
+              {selectedTopic && (
+                <div className="rounded-xl bg-accent/5 p-4">
+                  <div className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+                    탐구 주제
+                  </div>
+                  <div className="mt-1 font-medium text-slate-900">
+                    {selectedTopic.title}
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-xl border border-slate-200 p-4">
+                <div className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase">
+                  학습 정리
+                </div>
+                {summaryLoading ? (
+                  <p className="text-sm text-slate-400">정리글을 작성하는 중...</p>
+                ) : (
+                  <p className="text-sm leading-relaxed whitespace-pre-line text-slate-700">
+                    {summary}
+                  </p>
+                )}
+              </div>
+
+              <button
+                className="rounded-lg bg-accent py-2.5 font-medium text-white transition-colors hover:bg-accent-hover"
+                onClick={resetAll}
+              >
+                새 주제로 다시 시작하기
+              </button>
             </div>
           )}
 
