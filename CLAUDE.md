@@ -90,8 +90,11 @@
    - UI/진행 로직: [src/components/LearningStep.tsx](src/components/LearningStep.tsx)
      (`LearningStep`은 `key={paperId-stepId}`로 매번 새로 마운트시켜야 단계 전환 시
      이전 답안이 안 남음 — 실제로 이 버그가 있었어서 고쳤음, key 빼먹지 말 것)
-   - 전체 흐름(주제→논문→학습 단계) 오케스트레이션: [src/app/page.tsx](src/app/page.tsx)
-     (현재는 세션 내 React state로만 진행 상태를 관리 — 새로고침하면 초기화됨)
+   - 전체 흐름(주제→논문→학습 단계) 오케스트레이션: [src/app/page.tsx](src/app/page.tsx).
+     진행 상태는 [src/lib/sessionStorage.ts](src/lib/sessionStorage.ts)를 통해 브라우저
+     localStorage에 저장되어 새로고침해도 유지됨 (계정/DB가 없어서 "이 브라우저의 가장
+     최근 세션 하나"만 기억하는 수준 — 기기 간 동기화나 여러 세션 이력 관리는 안 됨).
+     헤더의 "처음부터 다시 시작" 링크나 `resetAll()`이 이 저장된 세션도 같이 지움.
 
 5. **완료 페이지 + 학습 정리글 (4단계)**
    - 논문 3개를 전부 완료(`completedPaperIds`가 papers 전체를 커버)하면 "papers"가 아니라
@@ -137,7 +140,9 @@
 
 ## 아직 없는 것 (다음 작업 후보)
 
-- 사용자 인증 및 학습 진행 상태 영속화 (현재는 DB 없음, 새로고침하면 초기화)
+- 사용자 인증 + 서버 DB 영속화 (지금은 계정 없이 브라우저 localStorage로 "최근 세션 1개"만
+  기억함 — [src/lib/sessionStorage.ts](src/lib/sessionStorage.ts). 기기 간 동기화, 여러
+  탐구 이력 관리, 다른 브라우저에서 이어하기 등이 필요해지면 그때 DB+인증으로 넘어갈 것)
 - 예체능(체육/음악/미술) 단원 데이터 — 사용자가 해당 PDF를 나중에 보내주기로 함
 - 국내 논문 검색 연동
 - 퀴즈 문항 수/난이도를 학년별로 조정하는 로직
