@@ -48,7 +48,18 @@
      장치지, 실제 선수학습 추적(어떤 단원을 이미 배웠는지)까지 하는 건 아님.
 
 2. **근거 논문 탐색 + 학생 눈높이 재구성**
-   - 논문 메타데이터/초록은 Semantic Scholar API로 검색 (키 불필요, rate limit 있음, limit=5)
+   - 논문 메타데이터/초록은 Semantic Scholar API로 검색 (limit=5).
+     **주의**: 검색어는 반드시 영어여야 함 — 한국어로 검색하면 거의 결과가 안 나옴(영어 위주
+     DB라서). 그래서 [suggest-topic](src/app/api/suggest-topic/route.ts)이 학생에게 보여줄
+     한국어 `title`과는 별도로 영어 `searchQuery`(학술 키워드 3~6단어)를 같이 생성하고,
+     find-papers는 그 `searchQuery`로 검색함 (`topic`은 프롬프트 맥락용으로만 사용).
+   - **Semantic Scholar 무료(키 없음) 사용 시 IP당 rate limit이 매우 낮음** — 실제로 이
+     프로젝트 개발 중 공유 클라우드 IP에서 429(Too Many Requests)가 계속 떴음. 검색이 실패하면
+     `searchPapers()`가 빈 배열을 반환하도록 되어 있고, 이 경우 find-papers 프롬프트가
+     "실제 논문인 것처럼 저자/연도를 지어내지 말고 (예시)로 표시"하도록 명시해뒀음(정직성
+     안전장치). 검색 신뢰도를 높이려면 `SEMANTIC_SCHOLAR_API_KEY`를 발급받아 `.env.local`에
+     넣을 것 — [src/app/api/find-papers/route.ts](src/app/api/find-papers/route.ts)가 있으면
+     자동으로 `x-api-key` 헤더에 실어 보냄.
    - Claude에게 후보 중 주제와 가장 관련 있는 논문을 최대 3개까지 골라 재구성하도록 요청
      (연구배경/목적/핵심개념/방법/결과, 학년별 눈높이). coreConcepts 개수는 2개로 고정하지
      않고 논문 내용에 맞게 자유롭게(보통 2~6개) 생성하도록 프롬프트에 명시함.
