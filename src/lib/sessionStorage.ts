@@ -1,3 +1,4 @@
+import type { TopicFormValue } from "@/components/TopicForm";
 import { ConceptStep, PaperSummary, TopicSuggestion } from "@/types";
 
 // 계정/DB가 없는 지금 단계에서 "새로고침하면 다 날아감"만 막기 위한 가벼운 영속화.
@@ -8,6 +9,7 @@ export interface PersistedSession {
   stage: string;
   grade: string;
   levelNote?: string;
+  lastFormValue: TopicFormValue | null;
   suggestions: TopicSuggestion[];
   selectedTopic: TopicSuggestion | null;
   papers: PaperSummary[];

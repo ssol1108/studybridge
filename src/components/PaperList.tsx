@@ -20,13 +20,15 @@ export default function PaperList({
   papers,
   onSelect,
   statusByPaperId,
+  loading,
 }: {
   papers: PaperSummary[];
   onSelect: (paper: PaperSummary) => void;
   statusByPaperId: Record<string, PaperStatus>;
+  loading?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className={`flex flex-col gap-4 ${loading ? "opacity-50" : ""}`}>
       {papers.map((p) => {
         const status = statusByPaperId[p.id] ?? "new";
         return (
@@ -76,8 +78,9 @@ export default function PaperList({
             <Field label="연구 방법" value={p.method} />
             <Field label="연구 결과" value={p.results} />
             <button
-              className={`self-start rounded-lg px-4 py-2 text-sm font-medium transition-colors ${BUTTON_CLASS[status]}`}
+              className={`self-start rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${BUTTON_CLASS[status]}`}
               onClick={() => onSelect(p)}
+              disabled={loading}
             >
               {BUTTON_LABEL[status]}
             </button>

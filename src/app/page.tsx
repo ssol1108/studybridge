@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Spinner from "@/components/Spinner";
 import TopicForm, { TopicFormValue } from "@/components/TopicForm";
 import TopicResult from "@/components/TopicResult";
 import PaperList, { PaperStatus } from "@/components/PaperList";
@@ -33,10 +34,16 @@ const STAGE_LABEL: Record<Stage, string> = {
   done: "학습을 모두 완료했어요",
 };
 
+const LOADING_LABEL: Partial<Record<Stage, string>> = {
+  "topic-result": "논문을 찾는 중이에요...",
+  papers: "배경지식 단계를 만드는 중이에요...",
+};
+
 export default function Home() {
   const [stage, setStage] = useState<Stage>("topic-form");
   const [grade, setGrade] = useState("");
   const [levelNote, setLevelNote] = useState<string | undefined>(undefined);
+  const [lastFormValue, setLastFormValue] = useState<TopicFormValue | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -51,8 +58,10 @@ export default function Home() {
 
   const [summary, setSummary] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const [hydrated, setHydrated] = useState(false);
+  const [showRestoredBanner, setShowRestoredBanner] = useState(false);
 
   // 새로고침해도 진행 상태가 안 날아가도록: 마운트 시 한 번 localStorage에서 복원.
   // hydrated가 true가 되기 전까지는 저장 effect가 돌지 않게 해서, 복원되기도 전에
@@ -63,6 +72,7 @@ export default function Home() {
       if (isStage(persisted.stage)) setStage(persisted.stage);
       setGrade(persisted.grade ?? "");
       setLevelNote(persisted.levelNote);
+      setLastFormValue(persisted.lastFormValue ?? null);
       setSuggestions(persisted.suggestions ?? []);
       setSelectedTopic(persisted.selectedTopic ?? null);
       setPapers(persisted.papers ?? []);
@@ -71,6 +81,9 @@ export default function Home() {
       setStepIndexByPaper(persisted.stepIndexByPaper ?? {});
       setCompletedPaperIds(new Set(persisted.completedPaperIds ?? []));
       setSummary(persisted.summary ?? null);
+      if (persisted.stage && persisted.stage !== "topic-form") {
+        setShowRestoredBanner(true);
+      }
     }
     setHydrated(true);
   }, []);
@@ -81,6 +94,7 @@ export default function Home() {
       stage,
       grade,
       levelNote,
+      lastFormValue,
       suggestions,
       selectedTopic,
       papers,
@@ -95,6 +109,7 @@ export default function Home() {
     stage,
     grade,
     levelNote,
+    lastFormValue,
     suggestions,
     selectedTopic,
     papers,
@@ -115,6 +130,7 @@ export default function Home() {
     setLoading(true);
     setError(null);
     setGrade(value.grade);
+    setLastFormValue(value);
     try {
       const subject = SUBJECTS.find((s) => s.id === value.subjectId)!;
       const note = buildLevelNote(value.grade, subject.name, subject.typicalGrade);
@@ -183,6 +199,10 @@ export default function Home() {
     setActivePaperId(paper.id);
 
     if (stepsByPaper[paper.id]) {
+      if (completedPaperIds.has(paper.id)) {
+        // "다시 학습하기": 이미 완료한 논문은 이어하기가 아니라 처음 단계부터 복습하도록.
+        setStepIndexByPaper((prev) => ({ ...prev, [paper.id]: 0 }));
+      }
       setStage("learning");
       return;
     }
@@ -263,6 +283,17 @@ export default function Home() {
     }
   }
 
+  async function handleCopySummary() {
+    if (!summary) return;
+    try {
+      await navigator.clipboard.writeText(summary);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError("복사에 실패했습니다. 직접 선택해서 복사해주세요.");
+    }
+  }
+
   function resetAll() {
     setStage("topic-form");
     setSuggestions([]);
@@ -274,6 +305,7 @@ export default function Home() {
     setActivePaperId(null);
     setSummary(null);
     setLevelNote(undefined);
+    setShowRestoredBanner(false);
     clearSession();
   }
 
@@ -301,6 +333,19 @@ export default function Home() {
 
         <StepIndicator current={STAGE_STEP[stage]} />
 
+        {showRestoredBanner && (
+          <div className="flex items-center justify-between gap-3 rounded-xl bg-accent/5 px-4 py-3 text-sm text-slate-600">
+            <span>이전에 하던 학습을 이어서 보고 있어요.</span>
+            <button
+              className="shrink-0 text-slate-400 hover:text-slate-600"
+              onClick={() => setShowRestoredBanner(false)}
+              aria-label="닫기"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
         {error && (
           <div className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm text-red-600">
             {error}
@@ -312,22 +357,54 @@ export default function Home() {
             {STAGE_LABEL[stage]}
           </h2>
 
+          {loading && LOADING_LABEL[stage] && (
+            <div className="mb-4 flex items-center gap-2 text-sm text-slate-500">
+              <Spinner />
+              {LOADING_LABEL[stage]}
+            </div>
+          )}
+
           {stage === "topic-form" && (
-            <TopicForm onSubmit={handleTopicSubmit} loading={loading} />
+            <TopicForm
+              onSubmit={handleTopicSubmit}
+              loading={loading}
+              initialValue={lastFormValue ?? undefined}
+            />
           )}
 
           {stage === "topic-result" && (
-            <TopicResult suggestions={suggestions} onSelect={handleTopicSelect} />
+            <div className="flex flex-col gap-4">
+              <button
+                className="self-start text-sm font-medium text-slate-500 hover:text-slate-700"
+                onClick={() => setStage("topic-form")}
+              >
+                ← 다시 조건 선택하기
+              </button>
+              <TopicResult
+                suggestions={suggestions}
+                onSelect={handleTopicSelect}
+                loading={loading}
+              />
+            </div>
           )}
 
           {stage === "papers" && (
-            <PaperList
-              papers={papers}
-              onSelect={handlePaperSelect}
-              statusByPaperId={Object.fromEntries(
-                papers.map((p) => [p.id, statusOf(p.id)])
-              )}
-            />
+            <div className="flex flex-col gap-4">
+              <button
+                className="self-start text-sm font-medium text-slate-500 hover:text-slate-700"
+                onClick={() => setStage("topic-result")}
+              >
+                ← 다른 주제 보기
+              </button>
+              <PaperList
+                papers={papers}
+                onSelect={handlePaperSelect}
+                statusByPaperId={Object.fromEntries(
+                  papers.map((p) => [p.id, statusOf(p.id)])
+                )}
+                loading={loading}
+              />
+            </div>
           )}
 
           {stage === "learning" && activeStep && (
@@ -370,11 +447,24 @@ export default function Home() {
               )}
 
               <div className="rounded-xl border border-slate-200 p-4">
-                <div className="mb-2 text-xs font-semibold tracking-wide text-slate-400 uppercase">
-                  학습 정리
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="text-xs font-semibold tracking-wide text-slate-400 uppercase">
+                    학습 정리
+                  </div>
+                  {!summaryLoading && summary && (
+                    <button
+                      className="text-xs font-medium text-accent hover:text-accent-hover"
+                      onClick={handleCopySummary}
+                    >
+                      {copied ? "복사됨 ✓" : "복사하기"}
+                    </button>
+                  )}
                 </div>
                 {summaryLoading ? (
-                  <p className="text-sm text-slate-400">정리글을 작성하는 중...</p>
+                  <div className="flex items-center gap-2 text-sm text-slate-400">
+                    <Spinner />
+                    정리글을 작성하는 중...
+                  </div>
                 ) : (
                   <p className="text-sm leading-relaxed whitespace-pre-line text-slate-700">
                     {summary}
@@ -390,8 +480,6 @@ export default function Home() {
               </button>
             </div>
           )}
-
-          {loading && <div className="mt-4 text-sm text-slate-400">불러오는 중...</div>}
         </main>
       </div>
     </div>

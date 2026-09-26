@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Spinner from "@/components/Spinner";
 import { SUBJECTS } from "@/data/curriculum";
 import { isGradeTypical } from "@/lib/gradeLevel";
 import { Grade } from "@/types";
@@ -44,15 +45,23 @@ export interface TopicFormValue {
 export default function TopicForm({
   onSubmit,
   loading,
+  initialValue,
 }: {
   onSubmit: (value: TopicFormValue) => void;
   loading: boolean;
+  initialValue?: TopicFormValue;
 }) {
-  const [category, setCategory] = useState(CATEGORIES[0]);
-  const [subjectId, setSubjectId] = useState(SUBJECTS_BY_CATEGORY[category][0].id);
-  const [unit, setUnit] = useState("");
-  const [major, setMajor] = useState("");
-  const [grade, setGrade] = useState<Grade>("고1");
+  const initialSubject = initialValue
+    ? SUBJECTS.find((s) => s.id === initialValue.subjectId)
+    : undefined;
+
+  const [category, setCategory] = useState(initialSubject?.category ?? CATEGORIES[0]);
+  const [subjectId, setSubjectId] = useState(
+    initialSubject?.id ?? SUBJECTS_BY_CATEGORY[category][0].id
+  );
+  const [unit, setUnit] = useState(initialValue?.unit ?? "");
+  const [major, setMajor] = useState(initialValue?.major ?? "");
+  const [grade, setGrade] = useState<Grade>(initialValue?.grade ?? "고1");
 
   const subjectsInCategory = SUBJECTS_BY_CATEGORY[category];
   const subject = subjectsInCategory.find((s) => s.id === subjectId)!;
@@ -164,8 +173,9 @@ export default function TopicForm({
       <button
         type="submit"
         disabled={loading || !major}
-        className="rounded-lg bg-accent py-2.5 font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex items-center justify-center gap-2 rounded-lg bg-accent py-2.5 font-medium text-white transition-colors hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
       >
+        {loading && <Spinner />}
         {loading ? "탐구 주제 찾는 중..." : "융합 탐구 주제 추천받기"}
       </button>
     </form>
