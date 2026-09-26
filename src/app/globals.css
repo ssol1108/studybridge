@@ -4,8 +4,8 @@
   color-scheme: light;
   --background: #f6f7fb;
   --foreground: #1e2233;
-  --accent: #0a6eff;
-  --accent-hover: #0858d1;
+  --accent: #2c509e;
+  --accent-hover: #223e7c;
 }
 
 @theme inline {

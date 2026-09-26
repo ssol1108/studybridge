@@ -192,8 +192,8 @@ export default function Home() {
     <div className="flex min-h-screen justify-center px-4 py-10 sm:py-16">
       <div className="flex w-full max-w-2xl flex-col gap-8">
         <header className="flex flex-col items-center gap-2 text-center">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent text-lg font-bold text-white shadow-sm">
-            S
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-accent text-xl shadow-sm">
+            📖
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             StudyBridge
