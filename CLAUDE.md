@@ -65,6 +65,10 @@
      않고 논문 내용에 맞게 자유롭게(보통 2~6개) 생성하도록 프롬프트에 명시함.
    - 구현: [src/app/api/find-papers/route.ts](src/app/api/find-papers/route.ts),
      [src/components/PaperList.tsx](src/components/PaperList.tsx)
+   - 실제로는 3개가 아니라 **1~3개**일 수 있음(후보가 적으면 Claude가 1~2개만 고름) —
+     그래서 papers 단계 제목은 `STAGE_LABEL`에 고정 텍스트로 안 두고 `getStageLabel(stage,
+     papers.length)`로 실제 개수를 반영함. "3개"라고 하드코딩하면 실제로 2개만 왔을 때
+     문구가 틀어짐 — 실제로 있었던 버그.
    - **논문 3개는 "하나 골라서 학습"이 아니라 "3개 다 학습"하는 구조**임. [src/app/page.tsx](src/app/page.tsx)가
      `stepsByPaper`/`stepIndexByPaper`/`completedPaperIds`로 논문별 학습 상태를 따로 추적하고,
      학습 중 "← 논문 목록으로" 버튼으로 언제든 다른 논문으로 전환 가능. `PaperList`는
@@ -103,6 +107,10 @@
      헤더의 "처음부터 다시 시작" 링크나 `resetAll()`이 이 저장된 세션도 같이 지움.
      복원된 세션이 topic-form이 아니면 "이전에 하던 학습을 이어서 보고 있어요" 배너를 보여줌
      (`showRestoredBanner`, 닫기 가능).
+   - 헤더 "처음부터 다시 시작"은 `handleHeaderReset()`을 거침 — stage가 papers/learning이면
+     (논문 학습 진행 상황이 걸려 있으므로) `window.confirm()`으로 한 번 확인받고, topic-result는
+     주제 3개 재생성 비용이 낮아서 확인 없이 바로 `resetAll()`. `resetAll()`을 직접 부르는
+     곳(예: done 단계의 "새 주제로 다시 시작하기")은 이미 다 끝난 상태라 확인 불필요.
    - **단계 간 뒤로가기**: topic-result → topic-form("← 다시 조건 선택하기"), papers →
      topic-result("← 다른 주제 보기"), learning → papers("← 논문 목록으로")까지 3군데 다
      있음. topic-form으로 돌아갈 때는 `lastFormValue`(마지막 제출값, 세션에도 저장됨)를
