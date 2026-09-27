@@ -193,4 +193,8 @@ npm run lint     # ESLint
 
 ## 환경 변수
 
-`.env.local.example` 참고. `ANTHROPIC_API_KEY`만 있으면 됨(Semantic Scholar는 키 불필요).
+`.env.local.example` 참고. `ANTHROPIC_API_KEY`만 있으면 됨(Semantic Scholar는 키 불필요,
+있으면 rate limit만 완화됨). `.env.local`은 `git check-ignore`로 직접 검증함 — `.gitignore`의
+`.env*` 패턴에 걸려 커밋되지 않음. 두 키 다 서버 전용 API route(`src/app/api/*`,
+`src/lib/claude.ts`)에서만 참조되고 `NEXT_PUBLIC_` 접두사가 없어 클라이언트 번들에도
+안 실림 — 실제로 두 조건 다 확인함(2026-09-27).
